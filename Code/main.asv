@@ -1,0 +1,182 @@
+function success = main(setUp)
+Screen('Preference', 'SkipSyncTests', 1); %TODO
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Main script for an experiment...
+% Author: Martin Gruber
+% Date: 09/12/2025
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Choose the experiment setup
+% CIN-personal, CIN-experimentroom, MPI
+if nargin < 1 || isempty(setUp); setUp = 'CIN-personal';end
+addpath('utils'); addpath('settings');
+
+fprintf('Running BR experiment with set-up "%s"\n', setUp);
+
+%% Variables
+% Variables read out by the system and specific to the hardware
+try
+    ptb = PTBSettings(setUp);
+catch PTBError
+    error('Something went wrong setting up PTB: %s', PTBError.message);
+end
+
+%% Paths
+myPaths.conditionPath = fullfile('..','condition');
+myPaths.stimuliLocation = fullfile('..','stimuli');
+myPaths.rawdataPath = fullfile('..','rawdata');
+myPaths.monCalDirPath = fullfile('..', '..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
+
+%% Gamma correction
+%TODO
+
+%% Design related
+design.useET = false;
+design.stimSizeInDegrees        = 2.5;      % stimulus size in visual deg.
+design.grayBackgroundInDegrees  = 2;        % grey frame side length in visual deg  
+design.fusionMaskInDegrees   = 4;        % surrounding fusion-aid frame (it is NOT a checkerboard)
+design.fixCrossInDegrees        = 0.1;      % Fixtion cross in degrees
+design.maxRunNr                 = 8; %TODO?
+
+% compute the corresponding pixel values given the specific technical setup
+design.stimSizeInPixelsX        = round(ptb.PixPerDegWidth*design.stimSizeInDegrees); 
+design.stimSizeInPixelsY        = round(ptb.PixPerDegHeight*design.stimSizeInDegrees);
+design.fixCrossInPixelsX        = round(ptb.PixPerDegWidth*design.fixCrossInDegrees);
+design.fixCrossInPixelsY        = round(ptb.PixPerDegHeight*design.fixCrossInDegrees);
+design.fusionMaskInPixelsX       = int16(round(ptb.PixPerDegWidth*design.fusionMaskInDegrees));
+design.fusionMaskInPixelsY       = int16(round(ptb.PixPerDegHeight*design.fusionMaskInDegrees)); 
+
+% prepare fusion mask texture
+fusionMask = imread(myPaths.conditionPath, background.jpg');
+fusionMaskResized = imresize(fusionMask, [design.fusionMaskInPixelsX, design.fusionMaskInPixelsY]);
+design.backGroundTexture = Screen('MakeTexture', ptb.window, fusionMaskResized);
+
+%% Fixation cross 
+% Fixation cross position
+design.fixCrossCoords = [
+    -design.fixCrossInPixelsX/2 design.fixCrossInPixelsX/2 0 0; ...
+    0 0 -design.fixCrossInPixelsY/2 design.fixCrossInPixelsY/2];
+
+%% destination rectangle
+% Define a rectangle where the stimulus is drawn
+design.destinationRect = [...
+    ptb.screenXpixels/2 - design.stimSizeInPixelsX/2, ...
+    ptb.screenYpixels/2 - design.stimSizeInPixelsY/2, ...
+    ptb.screenXpixels/2 + design.stimSizeInPixelsX/2, ...
+    ptb.screenYpixels/2 + design.stimSizeInPixelsY/2];
+
+
+%% Condition Table
+% Condition table
+design.stimLookupTable = readtable(fullfile(myPaths.conditionPath,'stimLookupTable.csv'));         % possible stimulus combinations
+
+%% Experimenter input
+% Input subject number -> ID
+log.sub = input('Enter subject ID: ', 's');
+myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', log.sub]);
+
+% Check if subject folder already exists
+if isfolder(myPaths.subjectDirectory)
+    disp('-> Subject folder already EXISTS.')
+else
+    % create subject folder
+    mkdir(myPaths.subjectDirectory);
+    disp('-> Subject folder CREATED.')
+end
+
+
+% Create participantInfo.mat if not existent
+if exist(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'),'file') ~= 2
+    participantInfo.id = log.sub;
+    participantInfo.date = datetime;
+    participantInfo = inputParticipantInformation(ptb, participantInfo);
+
+    % participantInfo.mat speichern
+    save(fullfile(myPaths.subjectDirectory, 'participantInfo'),'participantInfo');
+else
+    fprintf('-> participantInfo.mat for subject %s exists.\n', log.sub);
+    load(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'));
+end
+
+% Decide what to do
+% experiment or consent form
+condition = chooseOption(["main experiment", "imagery training","consent form"]);
+log.task = condition;
+%% Switch case for different tasks
+try
+    switch condition
+        case "main experiment"
+            % Run main experiment
+            log.runNr = inputRun(2);
+            binocularRivalryTraining(log, ptb, design, myPaths, participantInfo);
+            saveEnvironment(log,ptb,design,myPaths)
+
+        case "imagery training"
+            log.task = 'onsetRivalryPearsson';
+
+            % Input run number and part of the run
+            log.runNr = inputRun(2);
+            log.part = inputPart(2);
+
+            % Run experiment
+            onsetRivalryPearson(log, ptb, design, myPaths, participantInfo);
+            saveEnvironment(log,ptb,design,myPaths);
+
+        case "consent form"
+             % Display consent form
+            log = consentForm(log, ptb, design, participantInfo);
+            save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime)]),'log');
+    end
+catch ME
+    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
+    rethrow(ME)
+end
+end
+
+%% Functions
+function choice = chooseOption(options)
+% chooseOption  Prompt user to choose from a list of options
+%   options : cellstr or string array of labels
+%   returns choice (string)
+options = string(options(:)); % column vector
+
+% Print numbered menu (0-based)
+fprintf('%s\n', 'Choose an option.');
+for k = 0:numel(options)-1; fprintf('  %s  - %d\n', char(options(k+1)), k);end
+
+% Read and validate
+validInput = false;
+while ~validInput
+    s = input('Enter number: ', 's');
+    [v, choice] = str2num(s);
+    if choice && isscalar(v) && v==floor(v) && v>=0 && v<=numel(options)-1
+        choice = options(v+1);
+        validInput = true;
+    else
+        fprintf('Please input an integer between 0 and %d.\n', numel(options)-1);
+    end
+end
+end
+
+function runNr = inputRun(maxRun)
+% Function to enter run number
+    if nargin < 1
+        maxRun = 2;
+    end
+    
+    correctRunInput = false;
+    % check run input
+    while ~correctRunInput
+        runNr = input(['Enter run  Nr [1-' num2str(maxRun) ']:'], 's');
+        [runNr,isNumber] = str2num(runNr);
+        if isNumber && runNr>0 && runNr<=6
+            correctRunInput = true;
+        end
+    end
+end
+
+function saveEnvironment(log,ptb,design,myPaths)
+    save(fullfile(myPaths.subjectDirectory, ['ptb_' char(datetime)]),'ptb');
+    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
+    save(fullfile(myPaths.subjectDirectory, ['design_' char(datetime)]),'design');
+end

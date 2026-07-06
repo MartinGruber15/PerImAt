@@ -1,0 +1,9 @@
+trialID;cue;rightEye;leftEye;faceColor;houseColor
+1;face;face;house;green;red
+2;face;face;house;red;green
+3;face;house;face;green;red
+4;face;house;face;red;green
+5;house;face;house;green;red
+6;house;face;house;red;green
+7;house;house;face;green;red
+8;house;house;face;red;green

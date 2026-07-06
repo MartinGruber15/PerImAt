@@ -27,10 +27,18 @@ end
 myPaths.conditionPath = fullfile('..','condition');
 myPaths.stimuliLocation = fullfile('..','stimuli');
 myPaths.rawdataPath = fullfile('..','rawdata');
-myPaths.monCalDirPath = fullfile('..', '..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
+myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
 
 %% Gamma correction
-%TODO
+originalGamma = repmat(linspace(0,1,256)', 1, 3);
+% Load gamma file
+gammaFile = load(myPaths.monCalDirPath);
+gammaTable = gammaFile.cal.iGammaTable;
+% Clean tiny noise
+gammaTable(gammaTable < 1e-6) = 0;
+Screen('LoadNormalizedGammaTable', ptb.window, gammaTable);
+% Clean up and return to the original gamma file if something happens
+cleanupObj = onCleanup(@() safeRestoreGamma(ptb.window, originalGamma));
 
 %% Design related
 design.useET = false;
@@ -178,9 +186,20 @@ function runNr = inputRun(maxRun)
 end
 
 function saveEnvironment(log,ptb,design,myPaths)
-    timestamp = char(datetime('now','Format','yyyy-MM-dd_HHmmss'));
-    save(fullfile(myPaths.subjectDirectory, ['ptb_' timestamp '.mat']),'ptb');
-    save(fullfile(myPaths.subjectDirectory, ['log_' timestamp '.mat']),'log');
-    save(fullfile(myPaths.subjectDirectory, ['design_' timestamp '.mat']),'design');
-    
+timestamp = char(datetime('now','Format','yyyy-MM-dd_HHmmss'));
+save(fullfile(myPaths.subjectDirectory, ['ptb_' timestamp '.mat']),'ptb');
+save(fullfile(myPaths.subjectDirectory, ['log_' timestamp '.mat']),'log');
+save(fullfile(myPaths.subjectDirectory, ['design_' timestamp '.mat']),'design');
+
+end
+
+function safeRestoreGamma(win, originalGamma)
+try
+    if Screen('WindowKind', win) ~= 0
+        Screen('LoadNormalizedGammaTable', win, originalGamma);
+    end
+catch
+    % fallback: restore to desktop screen
+    Screen('LoadNormalizedGammaTable', 0, originalGamma);
+end
 end

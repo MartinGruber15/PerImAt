@@ -182,4 +182,5 @@ function saveEnvironment(log,ptb,design,myPaths)
     save(fullfile(myPaths.subjectDirectory, ['ptb_' timestamp '.mat']),'ptb');
     save(fullfile(myPaths.subjectDirectory, ['log_' timestamp '.mat']),'log');
     save(fullfile(myPaths.subjectDirectory, ['design_' timestamp '.mat']),'design');
+    
 end

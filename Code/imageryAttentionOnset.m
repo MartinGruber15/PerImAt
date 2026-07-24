@@ -1,4 +1,4 @@
-function [log, ptb, design] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo)
+function [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This experiment ...
@@ -16,7 +16,6 @@ function [log, ptb, design] = imageryAttentionOnset(log, ptb, design, myPaths, p
 modus = 'testing';
 
 %% Timing
-design.waitTillStartDuration    = 3;
 design.instructionWaitDuration  = 0.5;
 
 design.stimulusPresentationTime = 1 - ptb.ifi/2;
@@ -27,17 +26,7 @@ design.maxReportTime            = 2 - ptb.ifi/2;
 design.cueDuration              = 0.5 - ptb.ifi/2;
 
 
-%% Set key bindings
-% key assignment
-if  mod(str2double(log.sub), 2) == 0
-    ptb.Keys.house = ptb.Keys.right;
-    ptb.Keys.face = ptb.Keys.left;
-else
-    ptb.Keys.house = ptb.Keys.left;
-    ptb.Keys.face = ptb.Keys.right;
-end
-
-% Create a random sequence for the trials
+%% Create a random sequence for the trials
 % we have 4 conditions with baseline only having half the trials
 % the order of these blocks has to be randomized and each block contains a
 % randomized sequence of the 8 (4) possible trials
@@ -67,13 +56,10 @@ log.data.vividResponse          = zeros(rows,1);
 log.data.vividRT                = zeros(rows,1);
 log.data.perceived              = cell(rows, 1);
 
-%% Get instructions
-design = getInstructions(log,design,ptb,participantInfo);
-
 
 %% Fusion alignment
 % Before every run
-%participantInfo = alignFusion(ptb, participantInfo); %TODO add back in
+participantInfo = alignFusion(ptb, participantInfo); %TODO add back in
 
 %% Trial Procedure
 
@@ -113,7 +99,7 @@ disp(log.data)
 
 %% End of experiment
 Screen('CloseAll')
-ListenChar(1); % enable input to matlab windows
+%ListenChar(1); % enable input to matlab windows
 % Experiment ended without errors
 log.end = 'Success';
 

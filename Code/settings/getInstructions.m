@@ -127,6 +127,8 @@ if strcmp (participantInfo.language, 'german')
     design.attentionHouseText= ['attention House'];
     design.baselineText = ['basislinie'];
     design.vividQuestionText = ['how vivid was it?'];
+    design.cueHouseText = ['cue house'];
+    design.cueFaceText= ['cue face'];
 
 else
     %% determine response keys

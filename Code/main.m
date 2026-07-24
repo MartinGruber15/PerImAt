@@ -36,9 +36,9 @@ gammaFile = load(myPaths.monCalDirPath);
 gammaTable = gammaFile.cal.iGammaTable;
 % Clean tiny noise
 gammaTable(gammaTable < 1e-6) = 0;
-Screen('LoadNormalizedGammaTable', ptb.window, gammaTable);
+%Screen('LoadNormalizedGammaTable', ptb.window, gammaTable);
 % Clean up and return to the original gamma file if something happens
-cleanupObj = onCleanup(@() safeRestoreGamma(ptb.window, originalGamma));
+%cleanupObj = onCleanup(@() safeRestoreGamma(ptb.window, originalGamma));
 
 %% Design related
 design.useET = false;
@@ -75,6 +75,7 @@ design.destinationRect = [...
     ptb.screenXpixels/2 + design.stimSizeInPixelsX/2, ...
     ptb.screenYpixels/2 + design.stimSizeInPixelsY/2];
 
+design.waitTillStartDuration    = 3;
 
 %% Condition Table
 % Condition table
@@ -108,6 +109,19 @@ else
     load(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'));
 end
 
+%% Set key bindings
+% key assignment
+if  mod(str2double(log.sub), 2) == 0
+    ptb.Keys.house = ptb.Keys.right;
+    ptb.Keys.face = ptb.Keys.left;
+else
+    ptb.Keys.house = ptb.Keys.left;
+    ptb.Keys.face = ptb.Keys.right;
+end
+
+%% Get instructions
+design = getInstructions(log,design,ptb,participantInfo);
+
 % Decide what to do
 % experiment or consent form
 condition = chooseOption(["main experiment", "imagery training","consent form"]);
@@ -118,24 +132,20 @@ log.task = condition;
         case "main experiment"
             % Run main experiment
             log.runNr = inputRun(design.maxRunNr);
-            [log, ptb, design] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
-            saveEnvironment(log,ptb,design,myPaths)
+            [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
+            %saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
         case "imagery training"
-            log.task = 'onsetRivalryPearsson';
-
             % Input run number and part of the run
-            log.runNr = inputRun(2);
-            log.part = inputPart(2);
 
             % Run experiment
             onsetRivalryPearson(log, ptb, design, myPaths, participantInfo);
-            saveEnvironment(log,ptb,design,myPaths);
+            %saveEnvironment(log,ptb,design,myPaths, participantInfo);
 
         case "consent form"
              % Display consent form
-            log = consentForm(log, ptb, design, participantInfo);
-            save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime)]),'log');
+            log = consentForm(log, ptb, design);
+            save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]),'log');
     end
 %catch ME
 %    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
@@ -179,17 +189,18 @@ function runNr = inputRun(maxRun)
     while ~correctRunInput
         runNr = input(['Enter run  Nr [1-' num2str(maxRun) ']:'], 's');
         [runNr,isNumber] = str2num(runNr);
-        if isNumber && runNr>0 && runNr<=6
+        if isNumber && runNr>0 && runNr<=maxRun
             correctRunInput = true;
         end
     end
 end
 
-function saveEnvironment(log,ptb,design,myPaths)
+function saveEnvironment(log,ptb,design,myPaths, participantInfo)
 timestamp = char(datetime('now','Format','yyyy-MM-dd_HHmmss'));
 save(fullfile(myPaths.subjectDirectory, ['ptb_' timestamp '.mat']),'ptb');
 save(fullfile(myPaths.subjectDirectory, ['log_' timestamp '.mat']),'log');
 save(fullfile(myPaths.subjectDirectory, ['design_' timestamp '.mat']),'design');
+save(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'), 'participantInfo');
 
 end
 

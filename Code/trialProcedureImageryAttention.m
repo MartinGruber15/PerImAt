@@ -28,13 +28,15 @@ rows = height(trialSequence);
 log.ExperimentStart = GetSecs();
 trialStartTime = log.ExperimentStart;
 
+rows=1;
 % Loop trough all trials
 for trial = 1:rows
     %% Determine the stimuli for the current trial
     % Extract trialID and load stimuli
     trialID   = trialSequence.trialID(trial);
     condition = trialSequence.condition(trial);
-    trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
+    %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
+    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition);
    
     %% Trial Procedure
     % Draw the cue
@@ -204,4 +206,58 @@ while GetSecs < tEnd
     WaitSecs(0.001);   % reduces CPU load
 end
 if isnan(resp); resp=0;end
+end
+
+function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition)
+%% Determine the stimuli for the current trial
+%note: as the file has 8 entries but we dont have a color condition each
+%exact condition is repeated once. But tbh this does make sense so the runs
+%are not too short so either have this or repeat which is both fine I dont
+%care
+
+% Look up trial information
+stimRow = stimLookupTable(stimLookupTable.trialID == trialID, :);
+rightEyeStim = stimRow.rightEye{1};
+leftEyeStim = stimRow.leftEye{1};
+cue = stimRow.cue{1};
+
+leftImgName  = leftEyeStim  + "_gray";
+rightImgName = rightEyeStim + "_gray";
+
+switch condition
+    case "imagery"
+        taskStimulus = "";
+        if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
+    case "perception"
+        taskStimulus = cue + "_gray";
+        if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
+    case "attention"
+        taskStimulus = "superimposed_gray";
+        if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
+    case "baseline"
+        cueTxt = design.baselineText;
+        taskStimulus = "";
+    otherwise
+        error("Unknown condition")
+
+end
+
+%% Load the respective images
+leftImage  = loadImage(myPaths.stimuliLocation, leftImgName);
+rightImage = loadImage(myPaths.stimuliLocation, rightImgName);
+taskImg = [];
+if taskStimulus ~= ""
+    taskImg = loadImage(myPaths.stimuliLocation, taskStimulus);
+end
+
+trialStim = struct( ...
+    "rightEyeStim", rightEyeStim, ...
+    "leftEyeStim", leftEyeStim, ...
+    "cue", cue, ...
+    "faceColor", "", ...
+    "houseColor", "", ...
+    "leftImage", leftImage, ...
+    "rightImage", rightImage, ...
+    "taskImg", taskImg, ...
+    "cueTxt", cueTxt);
 end

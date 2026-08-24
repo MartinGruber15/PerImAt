@@ -43,7 +43,7 @@ switch ptb.SetUp
         ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
         ptb.Keys.accept = KbName('Space');      ptb.KeyList2(ptb.Keys.accept)= double(1);
         % Get Keyboard indices
-        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Tastatur');
+        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Logitech USB Keyboard');
         % for some unknown reason GetKeyboardIndices returns two indices
         % for the Keyboard.
         % It looks like the first index is the one working

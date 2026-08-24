@@ -1,7 +1,7 @@
 function success = main(setUp)
-Screen('Preference', 'SkipSyncTests', 1); %TODO
-opacity = 0.8;
-PsychDebugWindowConfiguration([], opacity)
+%Screen('Preference', 'SkipSyncTests', 1); %TODO
+%opacity = 0.8;
+%PsychDebugWindowConfiguration([], opacity)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
 % Author: Martin Gruber

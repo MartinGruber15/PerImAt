@@ -91,5 +91,5 @@ function [participantInfo] = alignFusion(ptb, participantInfo)
     participantInfo.horizontalOffset = horizontalOffset;
     participantInfo.verticalOffset = verticalOffset;
 
-    ListenChar(0);
+    %ListenChar(0);
 end

@@ -28,7 +28,7 @@ rows = height(trialSequence);
 log.ExperimentStart = GetSecs();
 trialStartTime = log.ExperimentStart;
 
-rows=1;
+rows=10;
 % Loop trough all trials
 for trial = 1:rows
     %% Determine the stimuli for the current trial

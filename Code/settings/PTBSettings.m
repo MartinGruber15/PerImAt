@@ -44,13 +44,19 @@ switch ptb.SetUp
         ptb.Keys.accept = KbName('Space');      ptb.KeyList2(ptb.Keys.accept)= double(1);
         % Get Keyboard indices
         [keyboardIndices, productNames, ~] = GetKeyboardIndices('Logitech USB Keyboard');
-        % for some unknown reason GetKeyboardIndices returns two indices
-        % for the Keyboard.
+        % for some reason GetKeyboardIndices returns two indices
+        % for the Keyboard. The physical device might offer several
+        % interfaces to interact with it
         % It looks like the first index is the one working
+        % However, apparently on tuxedo os and windows it looks like 
+        % assigning keyboardIndices(1)to both ptb keyboards does not work.
+        % It helps in this case to allow them to use different interfaces
+        % provided by the same device
         ptb.Keyboard1 = keyboardIndices(1);
-        ptb.Keyboard2 = keyboardIndices(1);
+        ptb.Keyboard2 = keyboardIndices(2); % (change back to 1 if this doesnt work)
         fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
         fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
+
     case 'CIN-experimentroom'
         % subject keys
         ptb.Keys.left   = KbName('4');  ptb.KeyList2(ptb.Keys.left)  = double(1);
@@ -123,7 +129,7 @@ ptb.grey = ptb.white / 2;
 
 % general screen settings
 ptb.FontColor = [1 1 1];
-ptb.BackgroundColor = ptb.grey;
+ptb.BackgroundColor = ptb.black;
 
 PsychImaging('PrepareConfiguration');                                     % standard first command
 % PsychImaging('AddTask', 'General', 'SideBySideCompressedStereo');       % not quite sure I need it

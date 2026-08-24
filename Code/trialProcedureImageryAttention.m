@@ -22,13 +22,12 @@ KbEventFlush(ptb.Keyboard1);
 KbQueueStart(ptb.Keyboard2); % Subjects
 KbQueueStart(ptb.Keyboard1); % Experimentors
 
-rows = height(trialSequence);
+%rows = height(trialSequence);
 
 %% Presentation of stimuli
 log.ExperimentStart = GetSecs();
 trialStartTime = log.ExperimentStart;
 
-rows=10;
 % Loop trough all trials
 for trial = 1:rows
     %% Determine the stimuli for the current trial
@@ -67,7 +66,7 @@ for trial = 1:rows
     [response, rt] = getFirstResponse(ptb, stimOnset, responseEnd);
     
     % draw vividness question
-    drawStereoInstruction(ptb, design.vividQuestionText);
+    drawStereoInstruction(ptb, trialStim.finalQText);
     vividOnset = Screen('Flip', ptb.window);
     vividEnd = vividOnset + design.maxVividTime;
     %collect vividness response
@@ -220,6 +219,7 @@ stimRow = stimLookupTable(stimLookupTable.trialID == trialID, :);
 rightEyeStim = stimRow.rightEye{1};
 leftEyeStim = stimRow.leftEye{1};
 cue = stimRow.cue{1};
+finalQuestion = [];
 
 leftImgName  = leftEyeStim  + "_gray";
 rightImgName = rightEyeStim + "_gray";
@@ -228,15 +228,19 @@ switch condition
     case "imagery"
         taskStimulus = "";
         if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
+        finalQuestion = design.finalQuestionImagery;
     case "perception"
         taskStimulus = cue + "_gray";
         if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
+        finalQuestion = design.finalQuestionPerception;
     case "attention"
         taskStimulus = "superimposed_gray";
         if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
+        finalQuestion = design.finalQuestionAttention;
     case "baseline"
         cueTxt = design.baselineText;
         taskStimulus = "";
+        finalQuestion = design.finalQuestionBaseline;
     otherwise
         error("Unknown condition")
 
@@ -259,5 +263,6 @@ trialStim = struct( ...
     "leftImage", leftImage, ...
     "rightImage", rightImage, ...
     "taskImg", taskImg, ...
-    "cueTxt", cueTxt);
+    "cueTxt", cueTxt, ...
+    "finalQText", finalQuestion);
 end

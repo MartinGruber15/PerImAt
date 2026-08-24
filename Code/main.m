@@ -36,9 +36,9 @@ gammaFile = load(myPaths.monCalDirPath);
 gammaTable = gammaFile.cal.iGammaTable;
 % Clean tiny noise
 gammaTable(gammaTable < 1e-6) = 0;
-%Screen('LoadNormalizedGammaTable', ptb.window, gammaTable);
+Screen('LoadNormalizedGammaTable', ptb.window, gammaTable);
 % Clean up and return to the original gamma file if something happens
-%cleanupObj = onCleanup(@() safeRestoreGamma(ptb.window, originalGamma));
+cleanupObj = onCleanup(@() safeRestoreGamma(ptb.window, originalGamma));
 
 %% Design related
 design.useET = false;
@@ -133,7 +133,7 @@ log.task = condition;
             % Run main experiment
             log.runNr = inputRun(design.maxRunNr);
             [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
-            %saveEnvironment(log,ptb,design,myPaths, participantInfo)
+            saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
         case "imagery training"
             % Input run number and part of the run

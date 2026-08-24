@@ -129,6 +129,10 @@ if strcmp (participantInfo.language, 'german')
     design.vividQuestionText = ['how vivid was it?'];
     design.cueHouseText = ['cue house'];
     design.cueFaceText= ['cue face'];
+    design.finalQuestionImagery = ['How vivid was the imagery?'];
+    design.finalQuestionAttention = ['How strongly did you focus on the cue?'];
+    design.finalQuestionPerception = ['How strongly did you focus on the cue?'];
+    design.finalQuestionBaseline = ['How strongly did you focus on the fixation dot?'];
 
 else
     %% determine response keys
@@ -228,6 +232,12 @@ else
     design.attentionHouseText= ['attention House'];
     design.baselineText = ['baseline'];
     design.vividQuestionText = ['how vivid was it?'];
+    design.cueHouseText = ['cue house'];
+    design.cueFaceText= ['cue face'];
+    design.finalQuestionImagery = ['How vivid was the imagery?'];
+    design.finalQuestionAttention = ['How strongly did you focus on the cue?'];
+    design.finalQuestionPerception = ['How strongly did you focus on the cue?'];
+    design.finalQuestionBaseline = ['How strongly did you focus on the fixation dot?'];
 
 end
 end

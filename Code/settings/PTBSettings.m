@@ -53,7 +53,7 @@ switch ptb.SetUp
         % It helps in this case to allow them to use different interfaces
         % provided by the same device
         ptb.Keyboard1 = keyboardIndices(1);
-        ptb.Keyboard2 = keyboardIndices(2); % (change back to 1 if this doesnt work)
+        ptb.Keyboard2 = keyboardIndices(1); % (change back to 1 if this doesnt work)
         fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
         fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
 

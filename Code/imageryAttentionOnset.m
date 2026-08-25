@@ -19,9 +19,9 @@ modus = 'testing';
 design.instructionWaitDuration  = 0.5;
 
 design.stimulusPresentationTime = 1 - ptb.ifi/2;
-design.taskDuration             = 5 -ptb.ifi/2;
+design.taskDuration             = 6 -ptb.ifi/2;
 design.maxVividTime             = 2 - ptb.ifi/2;
-design.ITI                      = 3 - ptb.ifi/2;
+design.ITI                      = 5 - ptb.ifi/2;
 design.maxReportTime            = 2 - ptb.ifi/2;
 design.cueDuration              = 0.5 - ptb.ifi/2;
 
@@ -35,7 +35,7 @@ trialSequence = buildTrialSequence(design.stimLookupTable, conditions);
 
 %%%%%%%%%% MODUS %%%%%%%%%%
 if strcmp(modus, 'testing')
-    rows = 2;
+    rows = 10;
 elseif strcmp(modus, 'full')
     rows=height(trialSequence);
 end

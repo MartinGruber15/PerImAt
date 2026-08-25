@@ -68,13 +68,14 @@ for trial = 1:rows
     % draw vividness question
     drawStereoInstruction(ptb, trialStim.finalQText);
     vividOnset = Screen('Flip', ptb.window);
-    vividEnd = vividOnset + design.maxVividTime;
-    %collect vividness response
-    [vividResponse, vividRT] = getFirstResponse(ptb, vividOnset, vividEnd);
-    
+    vividEnd = vividOnset + design.maxVividTime; % allow response during ITI
+
     % draw ITI (blank)
     drawStereoBlanks(ptb, design)
-    ITIOnset = Screen('Flip', ptb.window);
+    ITIOnset = Screen('Flip', ptb.window, vividEnd);
+    %collect vividness response
+    [vividResponse, vividRT] = getFirstResponse(ptb, vividOnset, vividEnd + design.ITI);
+
     trialStartTime = ITIOnset + design.ITI;
 
 
@@ -168,13 +169,16 @@ end
 
 function img = loadImage(folder, name)
 filename = fullfile(folder, name + ".png");
-[img,~,alpha] = imread(filename);
-%img(:,:,4) = alpha;
+info = imfinfo(filename);
+img = imread(filename);
+if isfield(info, 'Transparency')
+    alpha = info.Transparency;
+else
+    alpha = [];
+end
 end
 
 function drawStereoInstruction(ptb, text)
-% PURE DRAW FUNCTION (NO TIMING LOGIC)
-
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
 DrawFormattedText(ptb.window, text, 'center', 'center', ptb.FontColor);
 
@@ -199,7 +203,7 @@ while GetSecs < tEnd
             resp   = find(firstPress == tPress,1);
             rt     = tPress - tStart;
             %fprintf('RT from stim  = %.3f\n', tPress - tStart);
-            %fprintf('Response: %d (RT = %.3f s)\n', resp, rt);
+            fprintf('Response recorded: %d (RT = %.3f s)\n', resp, rt);
         end
     end
     WaitSecs(0.001);   % reduces CPU load
@@ -226,11 +230,11 @@ rightImgName = rightEyeStim + "_gray";
 
 switch condition
     case "imagery"
-        taskStimulus = "";
+        taskStimulus = "black_square";
         if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
         finalQuestion = design.finalQuestionImagery;
     case "perception"
-        taskStimulus = cue + "_gray";
+        taskStimulus = cue + "_30" + "_gray";
         if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
         finalQuestion = design.finalQuestionPerception;
     case "attention"

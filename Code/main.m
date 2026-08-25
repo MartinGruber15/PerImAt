@@ -57,7 +57,7 @@ design.fusionMaskInPixelsX       = int16(round(ptb.PixPerDegWidth*design.fusionM
 design.fusionMaskInPixelsY       = int16(round(ptb.PixPerDegHeight*design.fusionMaskInDegrees)); 
 
 % prepare fusion mask texture
-fusionMask = imread(fullfile(myPaths.conditionPath, 'background.jpg'));
+fusionMask = imread(fullfile(myPaths.conditionPath, 'background.png'));
 fusionMaskResized = imresize(fusionMask, [design.fusionMaskInPixelsX, design.fusionMaskInPixelsY]);
 design.backGroundTexture = Screen('MakeTexture', ptb.window, fusionMaskResized);
 

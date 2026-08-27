@@ -202,8 +202,7 @@ while GetSecs < tEnd
             tPress = min(valid(valid > 0));
             resp   = find(firstPress == tPress,1);
             rt     = tPress - tStart;
-            %fprintf('RT from stim  = %.3f\n', tPress - tStart);
-            fprintf('Response recorded: %d (RT = %.3f s)\n', resp, rt);
+            %fprintf('Response recorded: %d (RT = %.3f s)\n', resp, rt);
         end
     end
     WaitSecs(0.001);   % reduces CPU load

@@ -69,15 +69,92 @@ function participantInfo = inputParticipantInformation(ptb, participantInfo)
                     fprintf('Please give a real number as input.\n')
                 end
             end
+
+
+            checkinput = true;
+            while checkinput
+                participantInfo.gender = input('Subjects gender [m/f/d]? ','s');
+                if strcmp (participantInfo.gender, 'm')
+                    participantInfo.gender = 'male';
+                    checkinput = false;
+                elseif strcmp (participantInfo.gender, 'f')
+                    participantInfo.gender = 'female';
+                    checkinput = false;
+                elseif strcmp (participantInfo.gender, 'd')
+                    participantInfo.gender = 'diverse';
+                    checkinput = false;
+                else
+                    fprintf('Please answer with "m", "f" or "d".\n')
+                end
+            end
+
+            checkinput = true;
+            while checkinput
+                participantInfo.color = input('Passed color Vision test? [y/n]','s');
+                if strcmp (participantInfo.color, 'y')
+                    participantInfo.color = 'ok';
+                    checkinput = false;
+                elseif strcmp (participantInfo.color, 'n')
+                    participantInfo.color = 'not ok';
+                    checkinput = false;
+                else
+                    fprintf('Please answer with "y" or "n".\n')
+                end
+            end
+
+            checkinput = true;
+            while checkinput
+                visionInput = lower(strtrim(input( ...
+                    'Vision [n = normal / c = corrected-to-normal / u = non-corrected]? ', 's')));
+            
+                if strcmp(visionInput, 'n')
+                    participantInfo.vision = 'normal';
+                    participantInfo.visionCorrection = 'none';
+                    checkinput = false;
+            
+                elseif strcmp(visionInput, 'c')
+                    participantInfo.vision = 'corrected-to-normal';
+                    participantInfo.visionCorrection = strtrim(input( ...
+                        'Which correction do you use (e.g., glasses or contact lenses)? ', 's'));
+                    checkinput = false;
+            
+                elseif strcmp(visionInput, 'u')
+                    participantInfo.vision = 'non-corrected';
+                    participantInfo.visionCorrection = 'none';
+                    checkinput = false;
+            
+                else
+                    fprintf('Please answer with "n", "c", or "u".\n');
+                end
+            end
+            checkinput = true;
+            while checkinput
+                participantInfo.eyecondition = input('Amblyopia (lazy-eye) or strabismus (crossed-eyes)? ','s');
+                if strcmp (participantInfo.eyecondition, 'y')
+                    participantInfo.eyecondition = 'ok';
+                    checkinput = false;
+                elseif strcmp (participantInfo.eyecondition, 'n')
+                    participantInfo.eyecondition = 'not ok';
+                    checkinput = false;
+                else
+                    fprintf('Please answer with "y" or "n".\n')
+                end
+            end
+
             fprintf('\n\n');
             fprintf ([...
                 'You specified subject ' participantInfo.id '\n' ...
-                'Language: ' participantInfo.language '\n' ...
-                'Handedness: ' participantInfo.handedness '\n' ...
-                'Dominant eye: ' participantInfo.dominantEye '\n' ...
-                'Age: ' num2str(participantInfo.subjectAge) '\n'
+                'Language:      ' participantInfo.language '\n' ...
+                'Handedness:    ' participantInfo.handedness '\n' ...
+                'Dominant eye:  ' participantInfo.dominantEye '\n' ...
+                'Age:           ' num2str(participantInfo.subjectAge) '\n' ...
+                'Gender:        ' participantInfo.gender '\n' ...
+                'Color:         ' participantInfo.color '\n' ...
+                'Vision:        ' participantInfo.vision '\n' ...
+                'Visual aid:    ' participantInfo.visionCorrection '\n' ...
+                'Eye condition: ' participantInfo.eyecondition '\n'
                 ])
-            answer = input ('Are you sure you gave the right parameters?','s');
+            answer = input ('Are you sure you gave the right parameters? (y)','s');
             if strcmp (answer, 'y')
                 safetynet = false;
             end

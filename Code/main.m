@@ -131,7 +131,8 @@ log.task = condition;
     switch condition
         case "main experiment"
             % Run main experiment
-            log.runNr = inputRun(design.maxRunNr);
+            %log.runNr = inputRun(design.maxRunNr, myPaths);
+            log.runNr = autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
             [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
             saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
@@ -160,6 +161,28 @@ function choice = chooseOption(options)
 %   returns choice (string)
 options = string(options(:)); % column vector
 
+% Special case: yes/no question
+if numel(options) == 2 && all(ismember(lower(options), ["yes", "no"]))
+    fprintf('Choose an option.\n');
+    fprintf('  Yes - y\n');
+    fprintf('  No  - n\n');
+    validInput = false;
+    while ~validInput
+        s = strtrim(lower(input('Enter y/n: ', 's')));
+        switch s
+            case {"y", "yes"}
+                choice = "yes";
+                validInput = true;
+            case {"n", "no"}
+                choice = "no";
+                validInput = true;
+            otherwise
+                fprintf('Please enter y/yes or n/no.\n');
+        end
+    end
+    return
+end
+
 % Print numbered menu (0-based)
 fprintf('%s\n', 'Choose an option.');
 for k = 0:numel(options)-1; fprintf('  %s  - %d\n', char(options(k+1)), k);end
@@ -178,7 +201,7 @@ while ~validInput
 end
 end
 
-function runNr = inputRun(maxRun)
+function runNr = inputRun(maxRun, subjectDirectory)
 % Function to enter run number
     if nargin < 1
         maxRun = 2;
@@ -190,9 +213,35 @@ function runNr = inputRun(maxRun)
         runNr = input(['Enter run  Nr [1-' num2str(maxRun) ']:'], 's');
         [runNr,isNumber] = str2num(runNr);
         if isNumber && runNr>0 && runNr<=maxRun
-            correctRunInput = true;
+            if ~isempty(dir(fullfile(subjectDirectory, sprintf('*run-%02d.csv', runNr))))
+                fprintf('There is already a file for run %d . Do you want to overwrite it?\n', runNr);
+                choice = chooseOption(["NO", "yes"]);
+                if choice == "yes"
+                    correctRunInput = true;
+                end
+            else
+                correctRunInput = true;
+            end
         end
     end
+end
+
+function runNr = autoChooseNextRun(maxRun, subjectDirectory)
+runNr = [];
+for n = 1:maxRun
+    pattern = fullfile(subjectDirectory,sprintf('*run-%02d.csv', n));
+    if isempty(dir(pattern))
+        fprintf('Do you want to continue with run %d?\n', n);
+        choice = lower(chooseOption(["Yes", "No"]));
+        if choice == "yes"
+            runNr = n;
+        else
+            fprintf('Manually choose the run to continue with\n')
+            runNr = inputRun(maxRun, subjectDirectory);
+        end
+        break;
+    end
+end
 end
 
 function saveEnvironment(log,ptb,design,myPaths, participantInfo)

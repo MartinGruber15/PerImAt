@@ -13,7 +13,7 @@ function [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, d
 
 %% FYA - Choose modus
 % testing vs full
-modus = 'testing';
+modus = 'full';
 
 %% Timing
 design.instructionWaitDuration  = 0.5;

@@ -43,7 +43,7 @@ switch ptb.SetUp
         ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
         ptb.Keys.accept = KbName('Space');      ptb.KeyList2(ptb.Keys.accept)= double(1);
         % Get Keyboard indices
-        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Logitech USB Keyboard');
+        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Tastatur');
         % for some reason GetKeyboardIndices returns two indices
         % for the Keyboard. The physical device might offer several
         % interfaces to interact with it
@@ -129,7 +129,7 @@ ptb.grey = ptb.white / 2;
 
 % general screen settings
 ptb.FontColor = [1 1 1];
-ptb.BackgroundColor = ptb.black;
+ptb.BackgroundColor = ptb.black; %TODO
 
 PsychImaging('PrepareConfiguration');                                     % standard first command
 % PsychImaging('AddTask', 'General', 'SideBySideCompressedStereo');       % not quite sure I need it
@@ -148,6 +148,7 @@ switch ptb.SetUp
         ptb.widthMonitor    = 180;  % monitor width measured by hand - REMEASURE
         ptb.heightMonitor   = 120;  % monitor height measured by hand - REMEASURE
         ptb.lineWidthInPix  = 4;    % line width in pixels for fixation cross
+
     case 'CIN-experimentroom'
         [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [], [],[],ptb.stereomode);      
         ptb.FontSize = Screen('TextSize', ptb.window, 24);

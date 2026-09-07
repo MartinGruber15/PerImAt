@@ -39,42 +39,42 @@ for trial = 1:rows
    
     %% Trial Procedure
     % Draw the cue
-    drawStereoInstruction(ptb, trialStim.cueTxt);
+    draw.stereo.fixCrossPlusText(ptb, design,trialStim.cueTxt, trialStim.fixCrossColor);
     cueOnset = Screen('Flip', ptb.window, trialStartTime);
     cueEnd = cueOnset + design.cueDuration;
 
     % Draw the task (if something is shown, blank otherwise)
     if ~isempty(trialStim.taskImg)
-        drawStereoImages(ptb, design, trialStim.taskImg, trialStim.taskImg)
+        draw.stereo.images(ptb, design, trialStim.taskImg, trialStim.taskImg)
     else
-        drawStereoBlanks(ptb, design);
+        draw.stereo.blanks(ptb, design);
     end
     taskOnset = Screen('Flip', ptb.window, cueEnd);
     taskEnd = taskOnset + design.taskDuration;
 
     % Draw the BR stimuli
     KbQueueFlush(ptb.Keyboard2);
-    drawStereoImages(ptb, design, trialStim.leftImage, trialStim.rightImage)
+    draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage)
     stimOnset = Screen('Flip', ptb.window, taskEnd);
     stimOffset = stimOnset + design.stimulusPresentationTime;
     
     % draw response phase (only fixation cross)
-    drawStereoBlanks(ptb,design);
+    draw.stereo.blanks(ptb,design);
     responseOnset = Screen('Flip',ptb.window, stimOffset);
     responseEnd = responseOnset + design.maxReportTime;
     %collect the response
-    [response, rt] = getFirstResponse(ptb, stimOnset, responseEnd);
+    [response, rt] = input.getFirstResponse(ptb, stimOnset, responseEnd);
     
     % draw vividness question
-    drawStereoInstruction(ptb, trialStim.finalQText);
+    draw.stereo.instructionLikert(ptb,design, trialStim.finalQText, 5);
     vividOnset = Screen('Flip', ptb.window);
     vividEnd = vividOnset + design.maxVividTime; % allow response during ITI
 
     % draw ITI (blank)
-    drawStereoBlanks(ptb, design)
+    draw.stereo.blanks(ptb, design)
     ITIOnset = Screen('Flip', ptb.window, vividEnd);
     %collect vividness response
-    [vividResponse, vividRT] = getFirstResponse(ptb, vividOnset, vividEnd + design.ITI);
+    [vividResponse, vividRT] = input.getFirstResponse(ptb, vividOnset, vividEnd + design.ITI);
 
     trialStartTime = ITIOnset + design.ITI;
 
@@ -83,8 +83,6 @@ for trial = 1:rows
     log.data.condition{trial}       = condition;
     log.data.rightEye{trial}        = trialStim.rightEyeStim;
     log.data.leftEye{trial}         = trialStim.leftEyeStim;
-    log.data.faceColor{trial}       = trialStim.faceColor;
-    log.data.houseColor{trial}      = trialStim.houseColor;
     log.data.cue{trial}             = trialStim.cue;
     log.data.response(trial)        = response;
     log.data.rt(trial)              = rt;
@@ -95,76 +93,6 @@ for trial = 1:rows
 
 
 end
-end
-
-function trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition)
-    %% Determine the stimuli for the current trial
-   
-    % Look up trial information
-    stimRow = stimLookupTable(stimLookupTable.trialID == trialID, :);
-    rightEyeStim = stimRow.rightEye{1};
-    leftEyeStim = stimRow.leftEye{1};
-    faceColor = stimRow.faceColor{1};
-    houseColor = stimRow.houseColor{1};
-    cue = stimRow.cue{1};
-
-    if leftEyeStim == "house"
-        leftColor  = houseColor;
-        rightColor = faceColor;
-    else
-        leftColor  = faceColor;
-        rightColor = houseColor;
-    end
-
-    if cue == "house"; cueColor = houseColor; else; cueColor = faceColor; end
-
-    leftImgName  = leftEyeStim  + "_" + leftColor;
-    rightImgName = rightEyeStim + "_" + rightColor;
-
-switch condition
-    case "imagery"
-        taskStimulus = "";
-        if cue == "house"
-            if cueColor == "green"; cueTxt = design.imageryGreenHouseText; else; cueTxt = design.imageryRedHouseText;end
-        else
-            if cueColor == "green"; cueTxt = design.imageryGreenFaceText;else;cueTxt = design.imageryRedFaceText;end
-        end
-    case "perception"
-        taskStimulus = cue + "_" + cueColor;
-        if cue == "house"
-            if cueColor == "green";cueTxt = design.perceptGreenHouseText;else;cueTxt = design.perceptRedHouseText;end
-        else
-            if cueColor == "green";cueTxt = design.perceptGreenFaceText;else;cueTxt = design.perceptRedFaceText;end
-        end
-    case "attention"
-        taskStimulus = "superimposed";
-        if cue == "house";cueTxt = design.attentionHouseText;else;cueTxt = design.attentionFaceText;end
-    case "baseline"
-        cueTxt = design.baselineText;
-        taskStimulus = "";
-    otherwise
-        error("Unknown condition")
-
-end
-
-    %% Load the respective images
-    leftImage  = loadImage(myPaths.stimuliLocation, leftImgName);
-    rightImage = loadImage(myPaths.stimuliLocation, rightImgName);
-    taskImg = [];
-    if taskStimulus ~= ""
-        taskImg = loadImage(myPaths.stimuliLocation, taskStimulus);
-    end
-
-    trialStim = struct( ...
-    "rightEyeStim", rightEyeStim, ...
-    "leftEyeStim", leftEyeStim, ...
-    "cue", cue, ...
-    "faceColor", faceColor, ...
-    "houseColor", houseColor, ...
-    "leftImage", leftImage, ...
-    "rightImage", rightImage, ...
-    "taskImg", taskImg, ...
-    "cueTxt", cueTxt);
 end
 
 function img = loadImage(folder, name)
@@ -178,37 +106,8 @@ else
 end
 end
 
-function drawStereoInstruction(ptb, text)
-Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
-DrawFormattedText(ptb.window, text, 'center', 'center', ptb.FontColor);
 
-Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
-DrawFormattedText(ptb.window, text, 'center', 'center', ptb.FontColor);
 
-Screen('DrawingFinished', ptb.window);
-end
-
-function [resp, rt] = getFirstResponse(ptb, tStart, tEnd)
-resp = NaN;
-rt   = 0;
-
-while GetSecs < tEnd
-    [pressed, firstPress] = KbQueueCheck(ptb.Keyboard2);
-    % Store only the first valid response
-    if pressed && isnan(resp)
-        valid = firstPress;
-        valid(valid < tStart) = 0;
-        if any(valid)
-            tPress = min(valid(valid > 0));
-            resp   = find(firstPress == tPress,1);
-            rt     = tPress - tStart;
-            %fprintf('Response recorded: %d (RT = %.3f s)\n', resp, rt);
-        end
-    end
-    WaitSecs(0.001);   % reduces CPU load
-end
-if isnan(resp); resp=0;end
-end
 
 function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition)
 %% Determine the stimuli for the current trial
@@ -222,28 +121,28 @@ stimRow = stimLookupTable(stimLookupTable.trialID == trialID, :);
 rightEyeStim = stimRow.rightEye{1};
 leftEyeStim = stimRow.leftEye{1};
 cue = stimRow.cue{1};
-finalQuestion = [];
 
 leftImgName  = leftEyeStim  + "_gray";
 rightImgName = rightEyeStim + "_gray";
+finalQuestion = design.finalQuestion;
+fixCrossColor = design.fontColor;
 
 switch condition
     case "imagery"
-        taskStimulus = "black_square";
-        if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
-        finalQuestion = design.finalQuestionImagery;
+        taskStimulus = "grey_square";
+        cueTxt = design.cueTextImagery;
+        if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "perception"
         taskStimulus = cue + "_30" + "_gray";
-        if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
-        finalQuestion = design.finalQuestionPerception;
+        cueTxt = design.cueTextPerception;
+        if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "attention"
         taskStimulus = "superimposed_gray";
-        if cue == "house"; cueTxt = design.cueHouseText; else; cueTxt = design.cueFaceText;end
-        finalQuestion = design.finalQuestionAttention;
+        cueTxt = design.cueTextAttention;
+        if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "baseline"
-        cueTxt = design.baselineText;
-        taskStimulus = "";
-        finalQuestion = design.finalQuestionBaseline;
+        cueTxt = design.cueTextBaseline; % no text at all?
+        taskStimulus = ""; %TODO what to show?
     otherwise
         error("Unknown condition")
 
@@ -261,11 +160,10 @@ trialStim = struct( ...
     "rightEyeStim", rightEyeStim, ...
     "leftEyeStim", leftEyeStim, ...
     "cue", cue, ...
-    "faceColor", "", ...
-    "houseColor", "", ...
     "leftImage", leftImage, ...
     "rightImage", rightImage, ...
     "taskImg", taskImg, ...
     "cueTxt", cueTxt, ...
-    "finalQText", finalQuestion);
+    "finalQText", finalQuestion,...
+    "fixCrossColor", fixCrossColor);
 end

@@ -1,4 +1,4 @@
-function masks = make_mondrian_masks(sz_x,sz_y,n_masks,shape,selection)
+function masks = mondrian_masks(sz_x,sz_y,n_masks,shape,selection)
 % MAKE_MONDRIAN_MASKS
 %
 % This function creates Mondrian masks that can be used for continuous

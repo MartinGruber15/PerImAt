@@ -1,4 +1,4 @@
-function gamma_convert_images(rootDir,monCalDir,ptb)
+function image_dir(rootDir,monCalDir,ptb)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Applies gamma conversion on all images of all subfolders (depth 1) of the
 % given directory.

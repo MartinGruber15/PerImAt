@@ -1,4 +1,4 @@
-function drawStereoImages(ptb, design, leftImage, rightImage)
+function images(ptb, design, leftImage, rightImage)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws background textures and images onto both buffers of a 
 % stereo display.

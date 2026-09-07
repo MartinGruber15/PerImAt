@@ -1,4 +1,4 @@
-function masktex = createGaussianMask(window, color, width, height, falloff)
+function masktex = gaussianMask(window, color, width, height, falloff)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % creates gaussian noise texturethat is stronger towards the edges and 
 % clear in the center

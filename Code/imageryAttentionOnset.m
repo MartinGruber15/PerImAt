@@ -35,7 +35,7 @@ trialSequence = buildTrialSequence(design.stimLookupTable, conditions);
 
 %%%%%%%%%% MODUS %%%%%%%%%%
 if strcmp(modus, 'testing')
-    rows = 10;
+    rows = 2;
 elseif strcmp(modus, 'full')
     rows=height(trialSequence);
 end
@@ -59,12 +59,12 @@ log.data.perceived              = cell(rows, 1);
 
 %% Fusion alignment
 % Before every run
-participantInfo = alignFusion(ptb, participantInfo); %TODO add back in
+participantInfo = display.stereo.alignFusion(ptb, participantInfo); 
 
 %% Trial Procedure
 
 % Onset Introduction 1
-displayStereoInstruction(ptb, design.OnsetInstructionBrascamp1, design.instructionWaitDuration, false);
+display.stereo.instruction(ptb, design.OnsetInstructionBrascamp1, design.instructionWaitDuration, false);
 % Onset Introduction 2
 %displayStereoInstruction(ptb, design.OnsetInstructionBrascamp2, design.instructionWaitDuration, false);
 % Onset Introduction 3
@@ -135,7 +135,7 @@ nPer = [rows, rows, rows, rows/2];
 sets = cell(1,4);
 for c = 1:4
     ids = (1:nPer(c));                     % trial IDs for imagery/attention/perception
-    ids = repmat(ids, 1, repeats);       % repeat each id
+    ids = repmat(ids, 2, repeats);       % repeat each id
     ids = ids(randperm(numel(ids)));    % randomize order within block
     condNames = repmat(conditions(c), numel(ids), 1);
     sets{c} = table(ids(:), condNames, 'VariableNames', {'trialID','condition'});

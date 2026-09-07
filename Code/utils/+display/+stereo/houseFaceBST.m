@@ -1,4 +1,4 @@
-function onset = showStereoHouseFaceBST(ptb, log, design, faceTex, houseTex, duration, startWithFace)
+function onset = houseFaceBST(ptb, log, design, faceTex, houseTex, duration, startWithFace)
 % showStereoHouseFaceBST
 % Shows stereo stimuli that alternate between FACE and HOUSE every 100 ms.
 % Each frame uses a NEW exemplar (random from the corresponding set).

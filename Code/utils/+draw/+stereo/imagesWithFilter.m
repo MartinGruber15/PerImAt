@@ -1,4 +1,4 @@
-function drawStereoImagesWithFilter(ptb, log, design, leftImage, rightImage)
+function imagesWithFilter(ptb, log, design, leftImage, rightImage)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws background textures and images onto both buffers of a 
 % stereo display and applies a shapeMask on the image as well as a gaussian

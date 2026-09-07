@@ -1,4 +1,4 @@
-function masktex = createImageShapeMask(window, img, shape)
+function masktex = imageShapeMask(window, img, shape)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Cuts an image into an hexagonal, octagonal or decagonal shape and returns
 % it as texture

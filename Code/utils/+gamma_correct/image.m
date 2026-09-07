@@ -1,4 +1,4 @@
-function img = img_gammaConvert(LUT, img, varargin)
+function img = image(LUT, img, varargin)
 % function img = img_gammaLUT(gammaLUT,img);
 % same as last bit in img_gammaLUT.m, takes gammaLUT as input and gives img as output.
 % abartels 1.5.2007

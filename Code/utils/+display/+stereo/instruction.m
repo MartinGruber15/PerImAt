@@ -1,4 +1,4 @@
-function displayStereoInstruction(ptb, text, waitDuration, autoContinue)
+function instruction(ptb, text, waitDuration, autoContinue)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws and displays text onto both buffers of a stereo display.
 % 

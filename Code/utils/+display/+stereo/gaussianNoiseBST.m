@@ -1,4 +1,4 @@
-function showStereoGaussianNoiseBST(ptb, duration)
+function gaussianNoiseBST(ptb, duration)
 % ShowStereoGaussianNoise shows stereo Gaussian noise with fixation cross,
 % pacing frames to a target interval by compensating for generation time.
 

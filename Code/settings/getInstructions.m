@@ -115,24 +115,11 @@ if strcmp (participantInfo.language, 'german')
         'Drücke eine beliebige Taste um zu bestätigen.'
         ];
 
-    design.imageryGreenHouseText = ['imagery green house'];
-    design.imageryRedHouseText= ['imagery red house'];
-    design.imageryGreenFaceText= ['imagery green face'];
-    design.imageryRedFaceText= ['imagery red face'];
-    design.perceptGreenHouseText = ['percept green house'];
-    design.perceptRedHouseText= ['percept red house'];
-    design.perceptGreenFaceText= ['percept green face'];
-    design.perceptRedFaceText= ['percept red face'];
-    design.attentionFaceText= ['attention Face'];
-    design.attentionHouseText= ['attention House'];
-    design.baselineText = ['basislinie'];
-    design.vividQuestionText = ['how vivid was it?'];
-    design.cueHouseText = ['cue house'];
-    design.cueFaceText= ['cue face'];
-    design.finalQuestionImagery = ['How vivid was the imagery?'];
-    design.finalQuestionAttention = ['How strongly did you focus on the cue?'];
-    design.finalQuestionPerception = ['How strongly did you focus on the cue?'];
-    design.finalQuestionBaseline = ['How strongly did you focus on the fixation dot?'];
+    design.cueTextPerception = ['P'];
+    design.cueTextAttention = ['A'];
+    design.cueTextImagery = ['I'];
+    design.cueTextBaseline = [''];
+    design.finalQuestion = ['Wie gut haben Sie die Aufgabe erledigt?'];
 
 else
     %% determine response keys
@@ -220,24 +207,11 @@ else
         'Press any key to confirm.'
         ];
 
-    design.imageryGreenHouseText = ['imagery green house'];
-    design.imageryRedHouseText= ['imagery red house'];
-    design.imageryGreenFaceText= ['imagery green face'];
-    design.imageryRedFaceText= ['imagery red face'];
-    design.perceptGreenHouseText = ['percept green house'];
-    design.perceptRedHouseText= ['percept red house'];
-    design.perceptGreenFaceText= ['percept green face'];
-    design.perceptRedFaceText= ['percept red face'];
-    design.attentionFaceText= ['attention Face'];
-    design.attentionHouseText= ['attention House'];
-    design.baselineText = ['baseline'];
-    design.vividQuestionText = ['how vivid was it?'];
-    design.cueHouseText = ['cue house'];
-    design.cueFaceText= ['cue face'];
-    design.finalQuestionImagery = ['How vivid was the imagery?'];
-    design.finalQuestionAttention = ['How strongly did you focus on the cue?'];
-    design.finalQuestionPerception = ['How strongly did you focus on the cue?'];
-    design.finalQuestionBaseline = ['How strongly did you focus on the fixation dot?'];
+    design.cueTextPerception = ['P'];
+    design.cueTextAttention = ['A'];
+    design.cueTextImagery = ['I'];
+    design.cueTextBaseline = [''];
+    design.finalQuestion = ['How well did you work on the task?'];
 
 end
 end

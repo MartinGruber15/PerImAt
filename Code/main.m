@@ -1,7 +1,7 @@
 function success = main(setUp)
-%Screen('Preference', 'SkipSyncTests', 1); %TODO
-%opacity = 0.8;
-%PsychDebugWindowConfiguration([], opacity)
+Screen('Preference', 'SkipSyncTests', 1); %TODO
+opacity = 0.8;
+PsychDebugWindowConfiguration([], opacity)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
 % Author: Martin Gruber
@@ -30,15 +30,7 @@ myPaths.rawdataPath = fullfile('..','rawdata');
 myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
 
 %% Gamma correction
-originalGamma = repmat(linspace(0,1,256)', 1, 3);
-% Load gamma file
-gammaFile = load(myPaths.monCalDirPath);
-gammaTable = gammaFile.cal.iGammaTable;
-% Clean tiny noise
-gammaTable(gammaTable < 1e-6) = 0;
-Screen('LoadNormalizedGammaTable', ptb.window, gammaTable);
-% Clean up and return to the original gamma file if something happens
-cleanupObj = onCleanup(@() safeRestoreGamma(ptb.window, originalGamma));
+cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);
 
 %% Design related
 design.useET = false;
@@ -46,7 +38,7 @@ design.stimSizeInDegrees        = 2.5;      % stimulus size in visual deg.
 design.grayBackgroundInDegrees  = 2;        % grey frame side length in visual deg  
 design.fusionMaskInDegrees   = 4;        % surrounding fusion-aid frame (it is NOT a checkerboard)
 design.fixCrossInDegrees        = 0.1;      % Fixtion cross in degrees
-design.maxRunNr                 = 10; %TODO?
+design.maxRunNr                 = 10;
 
 % compute the corresponding pixel values given the specific technical setup
 design.stimSizeInPixelsX        = round(ptb.PixPerDegWidth*design.stimSizeInDegrees); 
@@ -100,7 +92,7 @@ end
 if exist(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'),'file') ~= 2
     participantInfo.id = log.sub;
     participantInfo.date = datetime;
-    participantInfo = inputParticipantInformation(ptb, participantInfo);
+    participantInfo = input.participantInformation(ptb, participantInfo);
 
     % participantInfo.mat speichern
     save(fullfile(myPaths.subjectDirectory, 'participantInfo'),'participantInfo');
@@ -111,37 +103,58 @@ end
 
 %% Set key bindings
 % key assignment
-if  mod(str2double(log.sub), 2) == 0
-    ptb.Keys.house = ptb.Keys.right;
-    ptb.Keys.face = ptb.Keys.left;
-else
-    ptb.Keys.house = ptb.Keys.left;
-    ptb.Keys.face = ptb.Keys.right;
+%if  mod(str2double(log.sub), 2) == 0
+%    ptb.Keys.house = ptb.Keys.right;
+%    ptb.Keys.face = ptb.Keys.left;
+%else
+%    ptb.Keys.house = ptb.Keys.left;
+%    ptb.Keys.face = ptb.Keys.right;
+%end
+switch(mod(str2double(log.sub), 4))
+    case 0
+        ptb.Keys.house = ptb.Keys.right;
+        ptb.Keys.face = ptb.Keys.left;
+        design.houseColor = [102, 255, 0];
+        design.faceColor = [255, 165, 0];
+    case 1
+        ptb.Keys.house = ptb.Keys.left;
+        ptb.Keys.face = ptb.Keys.right;
+        design.houseColor = [102, 255, 0];
+        design.faceColor = [255, 165, 0];
+    case 2
+        ptb.Keys.house = ptb.Keys.right;
+        ptb.Keys.face = ptb.Keys.left;
+        design.houseColor = [255, 165, 0];
+        design.faceColor = [102, 255, 0];
+    case 3
+        ptb.Keys.house = ptb.Keys.left;
+        ptb.Keys.face = ptb.Keys.right;
+        design.houseColor = [255, 165, 0];
+        design.faceColor = [102, 255, 0];
 end
+design.fontColor = ptb.FontColor;
 
 %% Get instructions
 design = getInstructions(log,design,ptb,participantInfo);
 
 % Decide what to do
 % experiment or consent form
-condition = chooseOption(["main experiment", "imagery training","consent form"]);
+condition = input.chooseOption(["main experiment", "imagery training","consent form"]);
 log.task = condition;
 %% Switch case for different tasks
 %try
     switch condition
         case "main experiment"
             % Run main experiment
-            %log.runNr = inputRun(design.maxRunNr, myPaths);
-            log.runNr = autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
+            log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
             [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
-            saveEnvironment(log,ptb,design,myPaths, participantInfo)
+            save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
-        case "imagery training"
+        case "imagery training" %TODO
             % Input run number and part of the run
 
             % Run experiment
             onsetRivalryPearson(log, ptb, design, myPaths, participantInfo);
-            %saveEnvironment(log,ptb,design,myPaths, participantInfo);
 
         case "consent form"
              % Display consent form
@@ -155,111 +168,3 @@ log.task = condition;
 end
 
 %% Functions
-function choice = chooseOption(options)
-% chooseOption  Prompt user to choose from a list of options
-%   options : cellstr or string array of labels
-%   returns choice (string)
-options = string(options(:)); % column vector
-
-% Special case: yes/no question
-if numel(options) == 2 && all(ismember(lower(options), ["yes", "no"]))
-    fprintf('Choose an option.\n');
-    fprintf('  Yes - y\n');
-    fprintf('  No  - n\n');
-    validInput = false;
-    while ~validInput
-        s = strtrim(lower(input('Enter y/n: ', 's')));
-        switch s
-            case {"y", "yes"}
-                choice = "yes";
-                validInput = true;
-            case {"n", "no"}
-                choice = "no";
-                validInput = true;
-            otherwise
-                fprintf('Please enter y/yes or n/no.\n');
-        end
-    end
-    return
-end
-
-% Print numbered menu (0-based)
-fprintf('%s\n', 'Choose an option.');
-for k = 0:numel(options)-1; fprintf('  %s  - %d\n', char(options(k+1)), k);end
-
-% Read and validate
-validInput = false;
-while ~validInput
-    s = input('Enter number: ', 's');
-    [v, choice] = str2num(s);
-    if choice && isscalar(v) && v==floor(v) && v>=0 && v<=numel(options)-1
-        choice = options(v+1);
-        validInput = true;
-    else
-        fprintf('Please input an integer between 0 and %d.\n', numel(options)-1);
-    end
-end
-end
-
-function runNr = inputRun(maxRun, subjectDirectory)
-% Function to enter run number
-    if nargin < 1
-        maxRun = 2;
-    end
-    
-    correctRunInput = false;
-    % check run input
-    while ~correctRunInput
-        runNr = input(['Enter run  Nr [1-' num2str(maxRun) ']:'], 's');
-        [runNr,isNumber] = str2num(runNr);
-        if isNumber && runNr>0 && runNr<=maxRun
-            if ~isempty(dir(fullfile(subjectDirectory, sprintf('*run-%02d.csv', runNr))))
-                fprintf('There is already a file for run %d . Do you want to overwrite it?\n', runNr);
-                choice = chooseOption(["NO", "yes"]);
-                if choice == "yes"
-                    correctRunInput = true;
-                end
-            else
-                correctRunInput = true;
-            end
-        end
-    end
-end
-
-function runNr = autoChooseNextRun(maxRun, subjectDirectory)
-runNr = [];
-for n = 1:maxRun
-    pattern = fullfile(subjectDirectory,sprintf('*run-%02d.csv', n));
-    if isempty(dir(pattern))
-        fprintf('Do you want to continue with run %d?\n', n);
-        choice = lower(chooseOption(["Yes", "No"]));
-        if choice == "yes"
-            runNr = n;
-        else
-            fprintf('Manually choose the run to continue with\n')
-            runNr = inputRun(maxRun, subjectDirectory);
-        end
-        break;
-    end
-end
-end
-
-function saveEnvironment(log,ptb,design,myPaths, participantInfo)
-timestamp = char(datetime('now','Format','yyyy-MM-dd_HHmmss'));
-save(fullfile(myPaths.subjectDirectory, ['ptb_' timestamp '.mat']),'ptb');
-save(fullfile(myPaths.subjectDirectory, ['log_' timestamp '.mat']),'log');
-save(fullfile(myPaths.subjectDirectory, ['design_' timestamp '.mat']),'design');
-save(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'), 'participantInfo');
-
-end
-
-function safeRestoreGamma(win, originalGamma)
-try
-    if Screen('WindowKind', win) ~= 0
-        Screen('LoadNormalizedGammaTable', win, originalGamma);
-    end
-catch
-    % fallback: restore to desktop screen
-    Screen('LoadNormalizedGammaTable', 0, originalGamma);
-end
-end

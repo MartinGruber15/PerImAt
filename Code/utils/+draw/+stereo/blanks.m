@@ -1,4 +1,4 @@
-function drawStereoBlanks(ptb, design)
+function blanks(ptb, design)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws and displays blank screens with fixation crosses onto both buffers 
 % of a stereo display.

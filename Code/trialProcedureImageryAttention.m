@@ -36,8 +36,19 @@ for trial = 1:rows
     % Extract trialID and load stimuli
     trialID   = trialSequence.trialID(trial);
     condition = trialSequence.condition(trial);
+
+    isCatch = contains(condition, "_catch_");
+    %identify catch trials
+    if isCatch
+        catchCondition = condition;
+        condition = extractBefore(catchCondition, "_catch_");
+        catchType  = extractAfter(catchCondition, "_catch_");
+    else
+        catchType = "";
+    end
+
     %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
-    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition);
+    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType);
     if prevCondition ~= condition
         remindAssociation = true;
         prevCondition = condition; % Update previous condition for the next trial
@@ -103,6 +114,7 @@ for trial = 1:rows
     log.data.stimOffset(trial)      = stimOffset;
     log.data.vividResponse(trial)   = vividResponse;
     log.data.vividRT(trial)         = vividRT;
+    log.data.isCatchTrial(trial)    = isCatch;
 
 
 end
@@ -122,21 +134,30 @@ end
 
 
 
-function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition)
+function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType)
 %% Determine the stimuli for the current trial
 %note: as the file has 8 entries but we dont have a color condition each
 %exact condition is repeated once. But tbh this does make sense so the runs
 %are not too short so either have this or repeat which is both fine I dont
 %care
-
+isCatch = (catchType ~= "");
 % Look up trial information
-stimRow = stimLookupTable(stimLookupTable.trialID == trialID, :);
-rightEyeStim = stimRow.rightEye{1};
-leftEyeStim = stimRow.leftEye{1};
-cue = stimRow.cue{1};
+if ~isCatch
+    stimRow = stimLookupTable(stimLookupTable.trialID == trialID, :);
+    rightEyeStim = stimRow.rightEye{1};
+    leftEyeStim = stimRow.leftEye{1};
+    cue = stimRow.cue{1};
+    leftImgName  = leftEyeStim  + "_gray";
+    rightImgName = rightEyeStim + "_gray";
+else
+    catchParts = split(catchType, "_");
+    cue = catchParts(1);
+    rightEyeStim = "catch_" + catchParts(2);
+    leftEyeStim = "catch_" + catchParts(2);
+    leftImgName = leftEyeStim;
+    rightImgName = rightEyeStim;
+end
 
-leftImgName  = leftEyeStim  + "_gray";
-rightImgName = rightEyeStim + "_gray";
 finalQuestion = design.finalQuestion;
 fixCrossColor = design.fontColor;
 

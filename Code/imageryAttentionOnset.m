@@ -30,8 +30,14 @@ design.cueDuration              = 1 - ptb.ifi/2;
 % we have 4 conditions with baseline only having half the trials
 % the order of these blocks has to be randomized and each block contains a
 % randomized sequence of the 8 (4) possible trials
-conditions = ["imagery", "attention", "perception", "baseline"];
-trialSequence = buildTrialSequence(design.stimLookupTable, conditions);
+% first, we make sure we have catchtrials table
+catchFile = fullfile(myPaths.subjectDirectory, "catchTrialOrder.csv");
+if ~isfile(catchFile)
+    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr, "catchTrialOrder.csv");
+end
+catchTable = readtable(catchFile);
+conditions = ["imagery", "attention", "perception", "baseline"]; 
+trialSequence = buildTrialSequence(design.stimLookupTable, conditions, catchTable, log.runNr);
 
 %%%%%%%%%% MODUS %%%%%%%%%%
 if strcmp(modus, 'testing')
@@ -52,8 +58,9 @@ log.data.stimOnset              = zeros(rows,1);
 log.data.stimOffset             = zeros(rows,1);
 log.data.vividResponse          = zeros(rows,1);
 log.data.vividRT                = zeros(rows,1);
-log.data.perceived              = cell(rows, 1);
-log.data.rating                 = cell(rows, 1);
+log.data.perceived              = cell(rows,1);
+log.data.rating                 = cell(rows,1);
+log.data.isCatchTrial           = false(rows,1);
 
 
 %% Fusion alignment
@@ -122,15 +129,15 @@ writetable(responseTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']))
 
 end
 
-function trialSequence = buildTrialSequence(stimLookupTable, conditions, repeats, seed)
+function trialSequence = buildTrialSequence(stimLookupTable, conditions, catchTable, runId, repeats, seed)
 % trialSequence: Nx2 numeric array [trialID, conditionIdx]
 % stimLookupTable : table (used only to check available stimulus IDs)
 % conditions : string/cellstr array, e.g. ["imagery","attention","perception","baseline"]
 % repeats : repetitions per trial set (scalar, default 1)
 % seed : numeric RNG seed (optional)
 
-if nargin<3 || isempty(repeats), repeats = 1; end
-if nargin<4, seed = []; end
+if nargin<5 || isempty(repeats), repeats = 1; end
+if nargin<6, seed = []; end
 if ~isempty(seed); rng(seed);end
 
 conditions = string(conditions(:));
@@ -140,14 +147,33 @@ nPer = [rows, rows, rows, rows/2];
 
 sets = cell(1,4);
 for c = 1:4
+    % normal trials
     ids = (1:nPer(c));                     % trial IDs for imagery/attention/perception
     ids = repmat(ids, 2, repeats);       % repeat each id
     ids = ids(randperm(numel(ids)));    % randomize order within block
     condNames = repmat(conditions(c), numel(ids), 1);
-    sets{c} = table(ids(:), condNames, 'VariableNames', {'trialID','condition'});
+    normalTrials = table(ids(:), condNames, 'VariableNames', {'trialID','condition'});
+    % catch trials
+    if ~isempty(catchTable)
+        thisCatch = catchTable(double(catchTable.run) == runId & string(catchTable.condition) == conditions(c), :); %catchtrials in this condition (and run)
+        nCatch = height(thisCatch); % number of catch trials in this condition
+        catchTrials = table(NaN(nCatch,1),strings(nCatch,1),'VariableNames', {'trialID','condition'}); % imitate normal trials although there is no valid trialID
+        for k = 1:nCatch % encode catch trial details in condition name
+            cue = string(thisCatch.cue(k));
+            stimulus = string(thisCatch.stimulus(k));
+            catchTrials.condition(k) = conditions(c) + "_catch_" + cue + "_" + stimulus;
+        end
+    else 
+        catchTrials = table(NaN(0,1),strings(0,1),'VariableNames', {'trialID','condition'});
+    end
+    block = [normalTrials; catchTrials];
+    block = block(randperm(height(block)), :);
+    sets{c} = block;
 end
 
 % Randomize order of the four blocks and concatenate
 order = randperm(4);
 trialSequence = vertcat(sets{order});
 end
+
+

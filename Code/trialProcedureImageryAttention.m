@@ -27,6 +27,8 @@ KbQueueStart(ptb.Keyboard1); % Experimentors
 %% Presentation of stimuli
 log.ExperimentStart = GetSecs();
 trialStartTime = log.ExperimentStart;
+prevCondition = "";
+remindAssociation = true;
 
 % Loop trough all trials
 for trial = 1:rows
@@ -36,12 +38,23 @@ for trial = 1:rows
     condition = trialSequence.condition(trial);
     %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
     trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition);
-   
+    if prevCondition ~= condition
+        remindAssociation = true;
+        prevCondition = condition; % Update previous condition for the next trial
+    end    
+
     %% Trial Procedure
     % Draw the cue
-    draw.stereo.fixCrossPlusText(ptb, design,trialStim.cueTxt, trialStim.fixCrossColor);
+    if remindAssociation
+        draw.stereo.fixCrossPlusLegend(ptb, design, trialStim.cueTxt, trialStim.fixCrossColor);
+        remindAssociation = false;
+        cueDuration = design.cueDuration + 1;
+    else
+        draw.stereo.fixCrossPlusText(ptb, design,trialStim.cueTxt, trialStim.fixCrossColor);
+        cueDuration = design.cueDuration;
+    end    
     cueOnset = Screen('Flip', ptb.window, trialStartTime);
-    cueEnd = cueOnset + design.cueDuration;
+    cueEnd = cueOnset + cueDuration;
 
     % Draw the task (if something is shown, blank otherwise)
     if ~isempty(trialStim.taskImg)

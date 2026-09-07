@@ -19,11 +19,11 @@ modus = 'full';
 design.instructionWaitDuration  = 0.5;
 
 design.stimulusPresentationTime = 1 - ptb.ifi/2;
-design.taskDuration             = 6 -ptb.ifi/2;
+design.taskDuration             = 3 -ptb.ifi/2; % 6
 design.maxVividTime             = 2 - ptb.ifi/2;
-design.ITI                      = 5 - ptb.ifi/2;
+design.ITI                      = 3 - ptb.ifi/2; % 5
 design.maxReportTime            = 2 - ptb.ifi/2;
-design.cueDuration              = 0.5 - ptb.ifi/2;
+design.cueDuration              = 1 - ptb.ifi/2;
 
 
 %% Create a random sequence for the trials
@@ -45,8 +45,6 @@ end
 log.data.condition              = cell(rows,1);
 log.data.leftEye                = cell(rows,1);
 log.data.rightEye               = cell(rows,1);
-log.data.faceColor              = cell(rows,1);
-log.data.houseColor             = cell(rows,1);
 log.data.cue                    = cell(rows,1);
 log.data.response               = zeros(rows,1);
 log.data.rt                     = zeros(rows,1);
@@ -55,6 +53,7 @@ log.data.stimOffset             = zeros(rows,1);
 log.data.vividResponse          = zeros(rows,1);
 log.data.vividRT                = zeros(rows,1);
 log.data.perceived              = cell(rows, 1);
+log.data.rating                 = cell(rows, 1);
 
 
 %% Fusion alignment
@@ -94,7 +93,7 @@ display.stereo.instruction(ptb, design.OnsetInstructionBrascamp1, design.instruc
 log = trialProcedureImageryAttention(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 
 %% Run is over
-displayStereoInstruction(ptb, design.RunIsOver, design.instructionWaitDuration, false);
+display.stereo.instruction(ptb, design.RunIsOver, design.instructionWaitDuration, false);
 disp(log.data)
 
 %% End of experiment
@@ -109,6 +108,13 @@ fileName = ['sub-' log.sub '_task-' sprintf('_run-%02d',log.runNr)];
 log.data.perceived(find(log.data.response==(ptb.Keys.house))) = {'house'};
 log.data.perceived(find(log.data.response==ptb.Keys.face)) = {'face'};
 log.data.perceived(find(log.data.response==0 | log.data.response==ptb.Keys.accept)) = {'mixed'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.left))) = {'1'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'2'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.right))) = {'3'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.down))) = {'4'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.accept))) = {'5'};
+
+
 
 % save the data to csv file
 responseTable = struct2table(log.data);

@@ -115,21 +115,21 @@ switch(mod(str2double(log.sub), 4))
         ptb.Keys.house = ptb.Keys.right;
         ptb.Keys.face = ptb.Keys.left;
         design.houseColor = [102, 255, 0];
-        design.faceColor = [255, 165, 0];
+        design.faceColor = [0, 0, 135];
     case 1
         ptb.Keys.house = ptb.Keys.left;
         ptb.Keys.face = ptb.Keys.right;
         design.houseColor = [102, 255, 0];
-        design.faceColor = [255, 165, 0];
+        design.faceColor = [0, 0, 135];
     case 2
         ptb.Keys.house = ptb.Keys.right;
         ptb.Keys.face = ptb.Keys.left;
-        design.houseColor = [255, 165, 0];
+        design.houseColor = [0, 0, 135];
         design.faceColor = [102, 255, 0];
     case 3
         ptb.Keys.house = ptb.Keys.left;
         ptb.Keys.face = ptb.Keys.right;
-        design.houseColor = [255, 165, 0];
+        design.houseColor = [0, 0, 135];
         design.faceColor = [102, 255, 0];
 end
 design.fontColor = ptb.FontColor;

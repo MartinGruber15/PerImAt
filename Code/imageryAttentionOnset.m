@@ -19,7 +19,7 @@ modus = 'full';
 design.instructionWaitDuration  = 0.5;
 
 design.stimulusPresentationTime = 1 - ptb.ifi/2;
-design.taskDuration             = 3 -ptb.ifi/2; % 6
+design.taskDuration             = 3 - ptb.ifi/2; % 6
 design.maxVividTime             = 2 - ptb.ifi/2;
 design.ITI                      = 3 - ptb.ifi/2; % 5
 design.maxReportTime            = 2 - ptb.ifi/2;
@@ -120,7 +120,6 @@ log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'2'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.right))) = {'3'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.down))) = {'4'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.accept))) = {'5'};
-
 
 
 % save the data to csv file

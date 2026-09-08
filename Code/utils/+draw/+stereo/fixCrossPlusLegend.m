@@ -1,8 +1,8 @@
 function fixCrossPlusLegend(ptb, design, text, fixCrossColor)
 
 % Text position
-cueY = ptb.yCenter - design.stimSizeInPixelsY/3;
-textY = ptb.yCenter + design.stimSizeInPixelsY/3;
+cueY = ptb.yCenter - design.stimSizeInPixelsY/5;
+textY = ptb.yCenter + design.stimSizeInPixelsY/5;
 % Save current text size and make legend text larger
 oldTextSize = Screen('TextSize', ptb.window);
 Screen('TextSize', ptb.window, round(ptb.PixPerDegHeight * 0.5));

@@ -1,5 +1,5 @@
 function fixCrossPlusText(ptb, design, text, fixCrossColor)
-cueY = ptb.yCenter - design.stimSizeInPixelsY/3;
+cueY = ptb.yCenter - design.stimSizeInPixelsY/5;
 % Save current text size and make instruction text larger
 oldTextSize = Screen('TextSize', ptb.window);
 Screen('TextSize', ptb.window, round(ptb.PixPerDegHeight * 0.5));

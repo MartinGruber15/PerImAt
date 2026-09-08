@@ -5,52 +5,34 @@ if nargin < 3 || isempty(outputname), outputname = "catchTrialOrder.csv"; end
 if nargin < 4, seed = []; end
 if ~isempty(seed), rng(seed); end
 
-conditions = ["imagery"; "perception"; "attention"];
+conditions = ["imagery"; "perception"; "attention"; "baseline"];
 cues      = ["face"; "house"];
 stimuli   = ["face"; "house"; "facehouse"; "houseface"];
 
-% Desired cue/stimulus combinations
-pairs = [
-    1 1    % face  + face
-    1 2    % face  + house
-    2 1    % house + face
-    2 2    % house + house
-    1 3    % face  + facehouse
-    2 4    % house + houseface
-];
+% Number of trials contributed by each condition
+nTrials = [6; 6; 6; 2];
 
-% Construct six catches for each main condition
-main = table();
+% Create the condition pool
+conditionPool = repelem(conditions, nTrials);
 
-for c = 1:numel(conditions)
-    % Randomly decide which composite stimulus goes with which cue
-    if rand < 0.5
-        pairsThisCondition = pairs;
-    else
-        pairsThisCondition = pairs;
-        pairsThisCondition(5:6,2) = pairsThisCondition([6 5],2);
+% Randomly distribute conditions across runs.
+% Each run contains exactly two different conditions.
+while true
+    conditionPool = conditionPool(randperm(numel(conditionPool)));
+    if all(conditionPool(1:2:end) ~= conditionPool(2:2:end))
+        break
     end
-    T = table( ...
-        repmat(conditions(c), size(pairsThisCondition,1), 1), ...
-        cues(pairsThisCondition(:,1)), ...
-        stimuli(pairsThisCondition(:,2)), ...
-        'VariableNames', {'condition','cue','stimulus'});
-    main = [main; T];
 end
 
-% Baseline
-baseline = table( ...
-    repmat("baseline", 2, 1), ...
-    cues, ...
-    cues, ...
-    'VariableNames', {'condition','cue','stimulus'});
+% Assign runs
+run = repelem((1:nRuns)', 2);
 
-% Combine, shuffle, assign runs
-catchTable = [main; baseline];
-catchTable = catchTable(randperm(height(catchTable)), :);
+% Randomly draw cue and stimulus for every trial
+cue = cues(randi(numel(cues), numel(conditionPool), 1));
+stimulus = stimuli(randi(numel(stimuli), numel(conditionPool), 1));
 
-catchTable.run = repelem((1:nRuns)', 2);
-catchTable = movevars(catchTable, 'run', 'Before', 1);
+catchTable = table(run,conditionPool,cue,stimulus, ...
+    'VariableNames', {'run', 'condition', 'cue', 'stimulus'});
 
 writetable(catchTable, fullfile(outputDirectory, outputname));
 end

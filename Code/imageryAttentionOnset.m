@@ -103,7 +103,10 @@ display.stereo.instruction(ptb, design.OnsetInstructionBrascamp1, design.instruc
 % Wait till start
 %displayStereoInstruction(ptb, design.waitTillStart, design.waitTillStartDuration, true);
 
-%% Main Experiment
+%% Main Experiment<
+if strcmp(ptb.SetUp,'MPI')
+    mri.waitForTrigger(ptb, log,design);
+end
 log = trialProcedureImageryAttention(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 
 %% Run is over

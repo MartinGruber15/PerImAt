@@ -1,4 +1,4 @@
-function success = main(setUp)
+function main(setUp)
 Screen('Preference', 'SkipSyncTests', 1); %TODO
 opacity = 0.8;
 PsychDebugWindowConfiguration([], opacity)
@@ -16,7 +16,9 @@ fprintf('Running BR experiment with set-up "%s"\n', setUp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.report = false;
 useEyetracker = false; % overwrite default
-stereomodeSequential = false; 
+stereomodeSequential = false;
+design.TR                    = 1.75;  % Control and change
+design.nDummies              = 5;  % Nr of dummies
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Variables
@@ -34,7 +36,7 @@ myPaths.rawdataPath = fullfile('..','rawdata');
 myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
 
 %% Gamma correction
-cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);
+cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); %#ok<NASGU>
 
 %% Design related
 design.stimSizeInDegrees        = 2.5;      % stimulus size in visual deg.

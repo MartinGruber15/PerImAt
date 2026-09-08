@@ -35,6 +35,19 @@ ptb.Keys.yes    = KbName('y');          ptb.KeyList1(ptb.Keys.yes)   = double(1)
 ptb.Keys.no     = KbName('n');          ptb.KeyList1(ptb.Keys.no)    = double(1);
 ptb.Keys.debug  = 1;
 switch ptb.SetUp
+    case 'CIN-personal'        
+        ptb.stereomode = 4; % == side by side for BR
+        ptb.usedatapixx = false;
+    case 'CIN-experimentroom'
+        ptb.stereomode = 4; % == side by side for BR
+        ptb.usedatapixx = false;
+    case 'MPI'
+        ptb.stereomode = 1; % == sequential for BR + shutter glasses
+        ptb.usedatapixx = true;
+        % Eyetracker
+        %ptb.useEyetracker =1; % Set to 1 to use eyetracker (0 - no tracking, -1 - dummymode)
+end
+switch ptb.SetUp
     case 'CIN-personal'
         % subject keys
         ptb.Keys.left   = KbName('LeftArrow');  ptb.KeyList2(ptb.Keys.left)  = double(1);
@@ -72,16 +85,17 @@ switch ptb.SetUp
         fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNamesExp{1});
         fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNamesSub{1});
     case 'MPI'
+        ptb.usedatapixx = true;
         % Because of the MR compatible keyboard we flip the order of button
         % presses. Additionally the buttons for the binary answers are index
         % (button 4$) and middle finger (button 3#)
         % The KeyList must be filled with doubles
         ptb.Keys.trg    = KbName ('w');     ptb.KeyList2(ptb.Keys.trg)   = double(1); % The scanner sends 'w' as USB keyboard input (from keyboard 2)
-        ptb.Keys.left   = KbName('LeftArrow');  ptb.KeyList2(ptb.Keys.left)  = double(1);
-        ptb.Keys.right  = KbName('RightArrow'); ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.left   = KbName('4$');  ptb.KeyList2(ptb.Keys.left)  = double(1);
+        ptb.Keys.right  = KbName('3#'); ptb.KeyList2(ptb.Keys.right) = double(1);
         ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.left)  = double(1);
         ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
-        ptb.Keys.accept = KbName('Return');     ptb.KeyList2(ptb.Keys.accept)= double(1);
+        ptb.Keys.accept = KbName('5%');     ptb.KeyList2(ptb.Keys.accept)= double(1);
 
         [keyboardIndicesSub, productNamesSub, ~] = GetKeyboardIndices('P.I. Engineering Xkeys');
         ptb.Keyboard2  = keyboardIndicesSub(1);
@@ -107,6 +121,41 @@ KbQueueCreate(ptb.Keyboard2, ptb.KeyList2);
 KbQueueStart(ptb.Keyboard2);
 %........................... END KEYS ....................................%
 
+%% ---------------------- EYETRACKER ----------------------------------- %
+if ptb.useEyetracker % If ET, then make calibration
+    ptb.eyelink.track       = 1; % 0 - no tracking, -1 - dummymode
+    ptb.key.sendToEyelink   = 1; % Send keypress to EyeLink-datafile, only if eyetracker is connected
+    %unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 60'); % we change the resolution using unix command xrandr to 60 hz. IMPORTANT: ONLY WORKS IF ProPixx is DP-0 and screen 1!!
+    %ptb = startEyetracker(ptb, data);
+    %Screen('Close', ptb.et.window);
+    %unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120'); % reset resolution and set back to 120 hz suing unix command xrandr
+else % Do nothing
+    ptb.eyelink.track       = 0; % 0 - no tracking, -1 - dummymode
+    ptb.key.sendToEyelink   = 0; % Send keypress to EyeLink-datafile, only if eyetracker is connected
+    %unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120'); % LM3 hotfix
+end
+%-------------------------------------------------------------------------%
+PsychImaging('PrepareConfiguration');                                     % standard first command
+% PsychImaging('AddTask', 'General', 'SideBySideCompressedStereo');       % not quite sure I need it
+% PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');            % nice to have - not necessary, but suggested
+% PsychImaging('AddTask', 'General', 'UseFineGrainedTiming', 'Auto');     % makes timing even more efficient, but if the hardware does not support it, PsychImaging('OpenWindow') fails
+% PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');          % accelerates switching between drawing into onscreen and offscreen windows
+
+%% -------------------Shutter Glasses ------------------------------------%
+if ptb.usedatapixx
+    % Tell PTB we want to display on a DataPixx device:
+    PsychImaging('AddTask', 'General', 'UseDataPixx');
+
+    % Enable DATAPixx blueline support
+    Datapixx('Open');
+    Datapixx('EnableVideoStereoBlueline');
+    Datapixx('SetVideoStereoVesaWaveform', 5);      % If driving VOLFONI (5), NVIDIA (2) glasses
+    fprintf("Successfully opened DataPixx!")
+    if Datapixx('IsViewpixx3D')
+        Datapixx('EnableVideoLcd3D60Hz');
+    end
+    Datapixx('RegWr');
+end
 %.......................... Window Configuration .........................%
 % Get the screen numbers. This gives us a number for each of the screens
 % attached to our computer.
@@ -129,16 +178,7 @@ ptb.grey = ptb.white / 2;
 
 % general screen settings
 ptb.FontColor = [1 1 1];
-ptb.BackgroundColor = ptb.black; %TODO
-
-PsychImaging('PrepareConfiguration');                                     % standard first command
-% PsychImaging('AddTask', 'General', 'SideBySideCompressedStereo');       % not quite sure I need it
-% PsychImaging('AddTask', 'General', 'UseVirtualFramebuffer');            % nice to have - not necessary, but suggested
-% PsychImaging('AddTask', 'General', 'UseFineGrainedTiming', 'Auto');     % makes timing even more efficient, but if the hardware does not support it, PsychImaging('OpenWindow') fails
-% PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');          % accelerates switching between drawing into onscreen and offscreen windows
-
-% Add stereomode
-ptb.stereomode = 4; % == side by side for BR 
+ptb.BackgroundColor = ptb.black; %TODO 
 
 switch ptb.SetUp
     case 'CIN-personal'
@@ -151,21 +191,21 @@ switch ptb.SetUp
 
     case 'CIN-experimentroom'
         [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [], [],[],ptb.stereomode);      
-        ptb.FontSize = Screen('TextSize', ptb.window, 24);
+        ptb.FontSize = Screen('TextSize', ptb.window, 25);
 
         % Real world variable
-        ptb.DistToMonitor   = 700;  % Distance to monitor in mm (measured by hand)
-        ptb.widthMonitor    = 600;  % monitor width measured by hand
-        ptb.heightMonitor   = 335;  % monitor height measured by hand
+        ptb.DistToMonitor   = 560;  % Distance to monitor in mm 
+        ptb.widthMonitor    = 600;  % monitor width 
+        ptb.heightMonitor   = 340;  % monitor height
         ptb.lineWidthInPix  = 4;    % line width in pixels for fixation cross
     case 'MPI'
         [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [], [],[],ptb.stereomode);    
         ptb.FontSize = Screen('TextSize', ptb.window, 40);
 
         % Real world variable
-        ptb.DistToMonitor   = 500;  % Distance to monitor in mm (measured by hand) - REMEASURE
-        ptb.widthMonitor    = 399;  % monitor width measured by hand - REMEASURE
-        ptb.heightMonitor   = 224;  % monitor height measured by hand - REMEASURE
+        ptb.DistToMonitor   = 1050;  % Distance to monitor in mm (measured by hand) - REMEASURE
+        ptb.widthMonitor    = 470;  % monitor width measured by hand - REMEASURE
+        ptb.heightMonitor   = 265;  % monitor height measured by hand - REMEASURE
         ptb.lineWidthInPix  = 4;    % line width in pixels for fixation cross
     otherwise
         error('No proper Set up was selected');
@@ -179,9 +219,11 @@ ptb.rightBuffer = 1;
 % numbers in "windowRect" and "rect"
 [ptb.screenXpixels, ptb.screenYpixels] = Screen('WindowSize', ptb.window);
 
+if ptb.stereomode == 1
+    SetStereoBlueLineSyncParameters(ptb.window, ptb.windowRect(4)+10);
+end
+
 % Get the centre coordinate of the window in pixels.
-% xCenter = screenXpixels / 2
-% yCenter = screenYpixels / 2
 [ptb.xCenter, ptb.yCenter] = RectCenter(ptb.windowRect);
 
 % Here we get the pixel size. This is not the physical size of the pixels
@@ -200,10 +242,15 @@ ptb.pixWidth =  ptb.widthMonitor/ptb.screenXpixels;  % width of single pixel in 
 ptb.pixHeight = ptb.heightMonitor/ptb.screenYpixels; % height of single pixel in mm
 
 ptb.DegPerPixWidth  = 2*atand((0.5*ptb.pixWidth)/ptb.DistToMonitor);
-ptb.PixPerDegWidth  = (1/ptb.DegPerPixWidth) * 2;                          % IMPORTANT: We multiply by two here, because it is a BR experiment and the screen is divided into 2!
+if ptb.stereomode == 4
+    ptb.PixPerDegWidth  = (1/ptb.DegPerPixWidth) * 2; % IMPORTANT: We multiply by two here, because it is a BR experiment and the screen is divided into 2!
+else
+    ptb.PixPerDegWidth  = (1/ptb.DegPerPixWidth);
+end 
 ptb.DegPerPixHeight = 2*atand((0.5*ptb.pixHeight)/ptb.DistToMonitor);
 ptb.PixPerDegHeight = 1/ptb.DegPerPixHeight;
-
+ptb.centerX = ptb.screenXpixels / 2;
+ptb.centerY = ptb.screenYpixels / 2;
 %......................... END Window Configuration ......................%
 
 %.................. Screen color settings and information ................%
@@ -214,7 +261,11 @@ ptb.maxLum = Screen('ColorRange', ptb.window);
 Screen('BlendFunction', ptb.window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
 
 %.................. END Screen color settings and information ............% 
-
+%% -------------- MAKE BLUELINES----------------%
+ptb.bl.blueRectLeftOn   = [0,                 ptb.windowRect(4)-1,ptb.windowRect(3)/4,   ptb.windowRect(4)];
+ptb.bl.blueRectLeftOff  = [ptb.windowRect(3)/4,  ptb.windowRect(4)-1, ptb.windowRect(3),    ptb.windowRect(4)];
+ptb.bl.blueRectRightOn  = [0,                 ptb.windowRect(4)-1, ptb.windowRect(3)*3/4, ptb.windowRect(4)];
+ptb.bl.blueRectRightOff = [ptb.windowRect(3)*3/4, ptb.windowRect(4)-1, ptb.windowRect(3),    ptb.windowRect(4)];
 %............................ Timing optmization..........................%
 % Query the inter-frame-interval. This refers to the minimum possible time
 % between drawing to the screen
@@ -237,6 +288,9 @@ ptb.waitframes = 1;
 % relationship between the two is: ifi = 1 / hertz
 ptb.hertz = FrameRate(ptb.window);
 
+% Threshold for 1 missed frame
+ptb.vbl.thresh = 1.15; % 1.15 of refresh rate.
+
 % We can also query the "nominal" refresh rate of our screen. This is
 % the refresh rate as reported by the video card. This is rounded to the
 % nearest integer. In reality there can be small differences between
@@ -244,6 +298,11 @@ ptb.hertz = FrameRate(ptb.window);
 % This is nothing to worry about. See Screen FrameRate? and Screen
 % GetFlipInterval? for more information
 ptb.nominalHertz = Screen('NominalFrameRate', ptb.window);
-
 %......................... END Timing optmization ........................%         
+
+%% ---------------------- TRIGGER --------------------------------------- %
+ptb.IOport.receive      = 0; % ignore
+ptb.IOport.send         = 0; % ignore
+ptb.usbTrg              = 1; % use USB trigger
+ptb.key.sendToIO        = 0; % Send key to IO
 end

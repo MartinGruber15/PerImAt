@@ -13,7 +13,7 @@ function [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, d
 
 %% FYA - Choose modus
 % testing vs full
-modus = 'full';
+modus = 'testing';
 
 %% Timing
 design.instructionWaitDuration  = 0.5;
@@ -52,14 +52,21 @@ log.data.condition              = cell(rows,1);
 log.data.leftEye                = cell(rows,1);
 log.data.rightEye               = cell(rows,1);
 log.data.cue                    = cell(rows,1);
-log.data.response               = zeros(rows,1);
-log.data.rt                     = zeros(rows,1);
 log.data.stimOnset              = zeros(rows,1);
 log.data.stimOffset             = zeros(rows,1);
 log.data.vividResponse          = zeros(rows,1);
 log.data.vividRT                = zeros(rows,1);
-log.data.perceived              = cell(rows,1);
 log.data.rating                 = cell(rows,1);
+if log.report
+    log.data.response               = zeros(rows,1);
+    log.data.rt                     = zeros(rows,1);
+    log.data.perceived              = cell(rows,1);
+else
+    log.data.fixDotPosHouse   = nan(rows,1);
+    log.data.fixDotPosFace    = nan(rows,1);
+    log.data.fixDotCoordHouse = cell(rows,1);
+    log.data.fixDotCoordFace  = cell(rows,1);
+end
 log.data.isCatchTrial           = false(rows,1);
 
 
@@ -112,9 +119,11 @@ log.end = 'Success';
 %% Save data
 fileName = ['sub-' log.sub '_task-' sprintf('_run-%02d',log.runNr)];
 % Convert button presses from key ids to the perceived (rect,circle,house,face,mixed)
-log.data.perceived(find(log.data.response==(ptb.Keys.house))) = {'house'};
-log.data.perceived(find(log.data.response==ptb.Keys.face)) = {'face'};
-log.data.perceived(find(log.data.response==0 | log.data.response==ptb.Keys.accept)) = {'mixed'};
+if log.report
+    log.data.perceived(find(log.data.response==(ptb.Keys.house))) = {'house'};
+    log.data.perceived(find(log.data.response==ptb.Keys.face)) = {'face'};
+    log.data.perceived(find(log.data.response==0 | log.data.response==ptb.Keys.accept)) = {'mixed'};
+end
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.left))) = {'1'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'2'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.right))) = {'3'};

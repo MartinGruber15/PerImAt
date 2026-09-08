@@ -15,6 +15,9 @@ addpath('utils'); addpath('settings');
 
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
+log.report = false;
+log.useEyetracker = false;
+
 %% Variables
 % Variables read out by the system and specific to the hardware
 try
@@ -33,41 +36,27 @@ myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightn
 cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);
 
 %% Design related
-design.useET = false;
 design.stimSizeInDegrees        = 2.5;      % stimulus size in visual deg.
-design.grayBackgroundInDegrees  = 2;        % grey frame side length in visual deg  
-design.fusionMaskInDegrees   = 4;        % surrounding fusion-aid frame (it is NOT a checkerboard)
+design.fusionMaskInDegrees      = 4;        % surrounding fusion-aid frame (it is NOT a checkerboard)
 design.fixCrossInDegrees        = 0.1;      % Fixtion cross in degrees
-design.maxRunNr                 = 10;
+design.fixDotSizeInDegrees      = 0.1;      % Fixation dot for no-report
 
-% compute the corresponding pixel values given the specific technical setup
-design.stimSizeInPixelsX        = round(ptb.PixPerDegWidth*design.stimSizeInDegrees); 
-design.stimSizeInPixelsY        = round(ptb.PixPerDegHeight*design.stimSizeInDegrees);
-design.fixCrossInPixelsX        = round(ptb.PixPerDegWidth*design.fixCrossInDegrees);
-design.fixCrossInPixelsY        = round(ptb.PixPerDegHeight*design.fixCrossInDegrees);
-design.fusionMaskInPixelsX       = int16(round(ptb.PixPerDegWidth*design.fusionMaskInDegrees));
-design.fusionMaskInPixelsY       = int16(round(ptb.PixPerDegHeight*design.fusionMaskInDegrees)); 
+design.maxRunNr                 = 10;
+design.waitTillStartDuration    = 3;
+
+% Fixation dot(s) appearance (no-report only)
+design.fixDotTransparency       = 0.5;
+design.fixDotColor              = [0.25, 0.25, 0.25];
+
+% Compute all screen-related design parameters
+design = computeDesignScreenPositions(ptb, design);
 
 % prepare fusion mask texture
 fusionMask = imread(fullfile(myPaths.conditionPath, 'background.png'));
 fusionMaskResized = imresize(fusionMask, [design.fusionMaskInPixelsX, design.fusionMaskInPixelsY]);
 design.backGroundTexture = Screen('MakeTexture', ptb.window, fusionMaskResized);
 
-%% Fixation cross 
-% Fixation cross position
-design.fixCrossCoords = [
-    -design.fixCrossInPixelsX/2 design.fixCrossInPixelsX/2 0 0; ...
-    0 0 -design.fixCrossInPixelsY/2 design.fixCrossInPixelsY/2];
 
-%% destination rectangle
-% Define a rectangle where the stimulus is drawn
-design.destinationRect = [...
-    ptb.screenXpixels/2 - design.stimSizeInPixelsX/2, ...
-    ptb.screenYpixels/2 - design.stimSizeInPixelsY/2, ...
-    ptb.screenXpixels/2 + design.stimSizeInPixelsX/2, ...
-    ptb.screenYpixels/2 + design.stimSizeInPixelsY/2];
-
-design.waitTillStartDuration    = 3;
 
 %% Condition Table
 % Condition table
@@ -103,35 +92,20 @@ end
 
 %% Set key bindings
 % key assignment
-%if  mod(str2double(log.sub), 2) == 0
-%    ptb.Keys.house = ptb.Keys.right;
-%    ptb.Keys.face = ptb.Keys.left;
-%else
-%    ptb.Keys.house = ptb.Keys.left;
-%    ptb.Keys.face = ptb.Keys.right;
-%end
-switch(mod(str2double(log.sub), 4))
-    case 0
-        ptb.Keys.house = ptb.Keys.right;
-        ptb.Keys.face = ptb.Keys.left;
-        design.houseColor = [102, 255, 0];
-        design.faceColor = [0, 0, 135];
-    case 1
-        ptb.Keys.house = ptb.Keys.left;
-        ptb.Keys.face = ptb.Keys.right;
-        design.houseColor = [102, 255, 0];
-        design.faceColor = [0, 0, 135];
-    case 2
-        ptb.Keys.house = ptb.Keys.right;
-        ptb.Keys.face = ptb.Keys.left;
-        design.houseColor = [0, 0, 135];
-        design.faceColor = [102, 255, 0];
-    case 3
-        ptb.Keys.house = ptb.Keys.left;
-        ptb.Keys.face = ptb.Keys.right;
-        design.houseColor = [0, 0, 135];
-        design.faceColor = [102, 255, 0];
+sub = str2double(log.sub);
+if  mod(sub, 2) == 0
+    ptb.Keys.house = ptb.Keys.right;
+    ptb.Keys.face = ptb.Keys.left;
+else
+    ptb.Keys.house = ptb.Keys.left;
+    ptb.Keys.face = ptb.Keys.right;
 end
+colors = [[102, 255, 0]; [0, 0, 135]];
+% Color: colors(1,:) for subjects 0/1 mod 4,
+%        colors(2,:) for subjects 2/3 mod 4
+colorIdx = floor(mod(sub, 4) / 2) + 1;
+design.houseColor = colors(colorIdx, :);
+design.faceColor  = colors(3 - colorIdx, :);
 design.fontColor = ptb.FontColor;
 
 %% Get instructions
@@ -147,6 +121,11 @@ log.task = condition;
         case "main experiment"
             % Run main experiment
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
+            eyeRun.subjectNr = log.sub;
+            eyeRun.runNr     = log.runNr;
+            eyeRun.report    = log.report;
+            if ptb.useEyetracker; ptb = eyetracking.startEyetracker(ptb, eyeRun);
+            end
             [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
             save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
@@ -166,5 +145,3 @@ log.task = condition;
 %    rethrow(ME)
 %end
 end
-
-%% Functions

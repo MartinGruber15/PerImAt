@@ -1,4 +1,4 @@
-function ptb = PTBSettings(SetUp)
+function ptb = PTBSettings(SetUp, useEyetracker, stereomodeSequential)
 %PTBSettings: reads out and sets values from/for Psychtoolbox and the
 %experiment
 %   input:
@@ -34,19 +34,14 @@ ptb.Keys.escape = KbName('ESCAPE');     ptb.KeyList1(ptb.Keys.escape)= double(1)
 ptb.Keys.yes    = KbName('y');          ptb.KeyList1(ptb.Keys.yes)   = double(1);
 ptb.Keys.no     = KbName('n');          ptb.KeyList1(ptb.Keys.no)    = double(1);
 ptb.Keys.debug  = 1;
-switch ptb.SetUp
-    case 'CIN-personal'        
-        ptb.stereomode = 4; % == side by side for BR
-        ptb.usedatapixx = false;
-    case 'CIN-experimentroom'
-        ptb.stereomode = 4; % == side by side for BR
-        ptb.usedatapixx = false;
-    case 'MPI'
-        ptb.stereomode = 1; % == sequential for BR + shutter glasses
-        ptb.usedatapixx = true;
-        % Eyetracker
-        %ptb.useEyetracker =1; % Set to 1 to use eyetracker (0 - no tracking, -1 - dummymode)
+if stereomodeSequential
+    ptb.steremode = 1; % == sequential for BR + shutter glasses
+    ptb.usedatapixx = true;
+else
+    ptb.stereomode = 4; % == side by side for BR
+    ptb.usedatapixx = false;
 end
+
 switch ptb.SetUp
     case 'CIN-personal'
         % subject keys
@@ -122,6 +117,7 @@ KbQueueStart(ptb.Keyboard2);
 %........................... END KEYS ....................................%
 
 %% ---------------------- EYETRACKER ----------------------------------- %
+ptb.useEyetracker = useEyetracker; % stupid default
 if ptb.useEyetracker % If ET, then make calibration
     ptb.eyelink.track       = 1; % 0 - no tracking, -1 - dummymode
     ptb.key.sendToEyelink   = 1; % Send keypress to EyeLink-datafile, only if eyetracker is connected

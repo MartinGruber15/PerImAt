@@ -12,16 +12,17 @@ PsychDebugWindowConfiguration([], opacity)
 % CIN-personal, CIN-experimentroom, MPI
 if nargin < 1 || isempty(setUp); setUp = 'CIN-personal';end
 addpath('utils'); addpath('settings');
-
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.report = false;
-log.useEyetracker = false;
+useEyetracker = false; % overwrite default
+stereomodeSequential = false; 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Variables
 % Variables read out by the system and specific to the hardware
 try
-    ptb = PTBSettings(setUp);
+    ptb = PTBSettings(setUp, useEyetracker, stereomodeSequential);
 catch PTBError
     error('Something went wrong setting up PTB: %s', PTBError.message);
 end

@@ -195,9 +195,6 @@ else
 end
 end
 
-
-
-
 function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType)
 %% Determine the stimuli for the current trial
 %note: as the file has 8 entries but we dont have a color condition each

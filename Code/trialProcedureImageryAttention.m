@@ -71,7 +71,7 @@ for trial = 1:rows
     if remindAssociation
         draw.stereo.fixCrossPlusLegend(ptb, design, trialStim.cueTxt, trialStim.fixCrossColor);
         remindAssociation = false;
-        cueDuration = design.cueDuration + 1;
+        cueDuration = design.cueDuration + 2; % first cue of miniblock is longer
     else
         draw.stereo.fixCrossPlusText(ptb, design,trialStim.cueTxt, trialStim.fixCrossColor);
         cueDuration = design.cueDuration;
@@ -127,7 +127,7 @@ for trial = 1:rows
         Eyelink('Message', sprintf('RIVALRY_OFFSET trial=%d', trial));
     end
     % draw vividness question (already during response phase)
-    draw.stereo.instructionLikert(ptb,design, trialStim.finalQText, 5);
+    draw.stereo.fixCrossPlusText(ptb,design, trialStim.finalQText, ptb.FontColor);
     %collect the response
     if log.report
         [response, rt] = input.getFirstResponse(ptb, stimOnset, responseEnd);
@@ -237,7 +237,7 @@ switch condition
         if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "baseline"
         cueTxt = design.cueTextBaseline; % no text at all?
-        taskStimulus = ""; %TODO what to show?
+        taskStimulus = "grey_square";
     otherwise
         error("Unknown condition")
 

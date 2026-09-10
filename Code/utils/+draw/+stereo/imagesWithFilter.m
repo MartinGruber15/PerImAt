@@ -19,8 +19,8 @@ function imagesWithFilter(ptb, log, design, leftImage, rightImage)
     %imageTextureCon = Screen('MakeTexture', ptb.window, leftImage);     % Create texture for stimulus
     Screen('DrawTexture', ptb.window, imageTextureCon, [], ...          % Draw the image
             ptb.destinationRect);
-    Screen('DrawLines',ptb.window,ptb.fixCrossCoords, ...               % Draw the fixation cross
-    ptb.lineWidthInPix,ptb.white,[ptb.xCenter ptb.yCenter]);
+    Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
+        design.fixCrossLineWidth,design.fixCrossColor,[design.centerX design.centerY]);
     Screen('DrawTexture', ptb.window, design.gaussianMask, [], ptb.destinationRect);
     % Select right-eye image buffer for drawing:
     Screen('SelectStereoDrawBuffer', ptb.window, log.rightBuffer);
@@ -29,8 +29,8 @@ function imagesWithFilter(ptb, log, design, leftImage, rightImage)
     %imageTextureIncon = Screen('MakeTexture', ptb.window, rightImage);  % Create texture for stimulus
     Screen('DrawTexture', ptb.window, imageTextureIncon, [], ...        % Draw the image
             ptb.destinationRect);
-    Screen('DrawLines',ptb.window,ptb.fixCrossCoords, ...
-    ptb.lineWidthInPix,ptb.white,[ptb.xCenter ptb.yCenter]);            % Draw the fixation cross
+    Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
+    design.fixCrossLineWidth,design.fixCrossColor,[design.centerX design.centerY]);
     Screen('DrawTexture', ptb.window, design.gaussianMask, [], ptb.destinationRect);
 
 

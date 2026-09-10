@@ -173,8 +173,8 @@ ptb.black = BlackIndex(ptb.screenNumber);
 ptb.grey = ptb.white / 2;
 
 % general screen settings
-ptb.FontColor = [1 1 1];
-ptb.BackgroundColor = ptb.black; %TODO 
+ptb.FontColor = ptb.black;
+ptb.BackgroundColor = ptb.grey; %TODO 
 
 switch ptb.SetUp
     case 'CIN-personal'

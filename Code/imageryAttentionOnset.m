@@ -18,12 +18,12 @@ modus = 'testing';
 %% Timing
 design.instructionWaitDuration  = 0.5;
 
-design.stimulusPresentationTime = 1 - ptb.ifi/2;
+design.stimulusPresentationTime = 3 - ptb.ifi/2; % 1
 design.taskDuration             = 3 - ptb.ifi/2; % 6
-design.maxVividTime             = 2 - ptb.ifi/2;
-design.ITI                      = 3 - ptb.ifi/2; % 5
-design.maxReportTime            = 2 - ptb.ifi/2;
-design.cueDuration              = 1 - ptb.ifi/2;
+design.maxVividTime             = 2 - ptb.ifi/2; % 2
+design.ITI                      = 2 - ptb.ifi/2; % 5
+design.maxReportTime            = 2 - ptb.ifi/2; % 2
+design.cueDuration              = 1 - ptb.ifi/2; % 1 (3 for every first in miniblock)
 
 
 %% Create a random sequence for the trials
@@ -41,7 +41,7 @@ trialSequence = buildTrialSequence(design.stimLookupTable, conditions, catchTabl
 
 %%%%%%%%%% MODUS %%%%%%%%%%
 if strcmp(modus, 'testing')
-    rows = 2;
+    rows = 5;
 elseif strcmp(modus, 'full')
     rows=height(trialSequence);
 end

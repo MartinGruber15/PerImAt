@@ -51,8 +51,13 @@ Screen('DrawTexture', ptb.window, design.backGroundTexture);
 % Image
 image_tex_left = Screen('MakeTexture', ptb.window, leftImage);
 Screen('DrawTexture', ptb.window, image_tex_left, [],design.destinationRect);
-% Fixation dot
-Screen('DrawDots', ptb.window, leftDotCoord,design.fixDotSizeInPixels,[design.fixDotColor, dotTransparency], [], 2);
+% Grey frame + circular aperture + ring + corner Xs
+Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
+% Fixation cross
+Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
+    design.fixCrossLineWidth,design.fixCrossColor,[design.centerX design.centerY]);
+% Fixation-dot (+frame)
+Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, leftDotPos),[],[],dotTransparency);
 
 
 %% Select right-eye image buffer
@@ -62,8 +67,13 @@ Screen('DrawTexture', ptb.window, design.backGroundTexture);
 % Image
 image_tex_right = Screen('MakeTexture', ptb.window, rightImage);
 Screen('DrawTexture', ptb.window, image_tex_right, [],design.destinationRect);
-% Fixation dot
-Screen('DrawDots', ptb.window, rightDotCoord,design.fixDotSizeInPixels,[design.fixDotColor, dotTransparency], [], 2);
+% Grey frame + circular aperture + ring + corner Xs
+Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
+% Fixation cross
+Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
+    design.fixCrossLineWidth,design.fixCrossColor,[design.centerX design.centerY]);
+% Fixation-dot (+frame)
+Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, rightDotPos),[],[],dotTransparency);
 
 %% Finish drawing
 Screen('DrawingFinished', ptb.window);

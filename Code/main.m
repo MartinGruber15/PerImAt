@@ -39,27 +39,35 @@ myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightn
 cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); %#ok<NASGU>
 
 %% Design related
-design.stimSizeInDegrees        = 2.5;      % stimulus size in visual deg.
-design.fusionMaskInDegrees      = 4;        % surrounding fusion-aid frame (it is NOT a checkerboard)
-design.fixCrossInDegrees        = 0.1;      % Fixtion cross in degrees
-design.fixDotSizeInDegrees      = 0.1;      % Fixation dot for no-report
+design.stimSizeInDegrees        = 3.5;      % stimulus size in visual deg.
+design.frameSizeFactor         = 1.3;%1.1
+design.frameApertureFactor     = 2/3;
+design.fusionMaskInDegrees      = 8;        % surrounding fusion-aid frame (it is NOT a checkerboard)
+design.fixCrossInDegrees        = 0.2;      % Fixtion cross in degrees
+design.fixDotSizeInDegrees      = 0.1;
+design.fixDotFrameSizeInDegrees = 0.15; % 35?    % Frame around fixation dot% Fixation dot for no-report
+design.legendPictogramInDegrees = 0.5;
 
 design.maxRunNr                 = 10;
 design.waitTillStartDuration    = 3;
 
-% Fixation dot(s) appearance (no-report only)
-design.fixDotTransparency       = 0.5;
-design.fixDotColor              = [0.25, 0.25, 0.25];
 
 % Compute all screen-related design parameters
 design = computeDesignScreenPositions(ptb, design);
 
+% for color association legend
+[housePictogram,~,houseAlpha] = imread(fullfile(myPaths.conditionPath,'house_pictogram.png'));
+[facePictogram,~,faceAlpha] = imread(fullfile(myPaths.conditionPath,'face_pictogram.png'));
+housePictogram = cat(3,housePictogram,houseAlpha);
+facePictogram = cat(3,facePictogram,faceAlpha);
+design.housePictogramTexture = Screen('MakeTexture',ptb.window,housePictogram);
+design.facePictogramTexture = Screen('MakeTexture',ptb.window,facePictogram);
+
+
 % prepare fusion mask texture
-fusionMask = imread(fullfile(myPaths.conditionPath, 'background.png'));
+fusionMask = imread(fullfile(myPaths.conditionPath, 'background.jpg'));
 fusionMaskResized = imresize(fusionMask, [design.fusionMaskInPixelsX, design.fusionMaskInPixelsY]);
 design.backGroundTexture = Screen('MakeTexture', ptb.window, fusionMaskResized);
-
-
 
 %% Condition Table
 % Condition table

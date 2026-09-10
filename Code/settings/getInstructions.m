@@ -119,8 +119,8 @@ if strcmp (participantInfo.language, 'german')
     design.cueTextAttention = ['A'];
     design.cueTextImagery = ['I'];
     design.cueTextBaseline = [''];
-    design.finalQuestion = ['Wie gut haben Sie die Aufgabe erledigt?'];
-
+    %design.finalQuestion = ['Wie gut haben Sie die Aufgabe erledigt?'];
+    design.finalQuestion = ['1 - 5?'];
 else
     %% determine response keys
     % English version of instructions
@@ -211,7 +211,8 @@ else
     design.cueTextAttention = ['A'];
     design.cueTextImagery = ['I'];
     design.cueTextBaseline = [''];
-    design.finalQuestion = ['How well did you work on the task?'];
+    %design.finalQuestion = ['How well did you work on the task?'];
+    design.finalQuestion = ['1 - 5?'];
 
 end
 end

@@ -47,16 +47,9 @@ for trial = 1:rows
         catchType = "";
     end
     if ~log.report
-        % Determine whether this trial uses cardinal or diagonal positions
-        % Here we alternate between the two.
-        if mod(trial, 2) == 1
-            availablePairs = design.fixDotCardinalPairs;
-        else
-            availablePairs = design.fixDotDiagonalPairs;
-        end
         % Randomly select one valid pair
-        pairIndex = randi(size(availablePairs, 1));
-        selectedPair = availablePairs(pairIndex, :);
+        pairIndex = randi(size(design.fixDotValidPairs, 1));
+        selectedPair = design.fixDotValidPairs(pairIndex, :);
     end
 
     %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);

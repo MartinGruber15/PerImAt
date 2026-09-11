@@ -106,6 +106,7 @@ display.stereo.instruction(ptb, design.OnsetInstructionBrascamp1, design.instruc
 %% Main Experiment<
 if strcmp(ptb.SetUp,'MPI')
     mri.waitForTrigger(ptb, log,design);
+    RestrictKeysForKbCheck(ptb.restrictedKeyList) % TODO is this fine?
 end
 log = trialProcedureImageryAttention(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 

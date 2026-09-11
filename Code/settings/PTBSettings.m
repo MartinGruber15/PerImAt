@@ -91,6 +91,7 @@ switch ptb.SetUp
         ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.left)  = double(1);
         ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
         ptb.Keys.accept = KbName('5%');     ptb.KeyList2(ptb.Keys.accept)= double(1);
+        ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
 
         [keyboardIndicesSub, productNamesSub, ~] = GetKeyboardIndices('P.I. Engineering Xkeys');
         ptb.Keyboard2  = keyboardIndicesSub(1);

@@ -13,61 +13,25 @@ PsychDebugWindowConfiguration([], opacity)
 if nargin < 1 || isempty(setUp); setUp = 'CIN-personal';end
 addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.report = false;
-useEyetracker = false; % overwrite default
+useEyetracker = false; 
 stereomodeSequential = false;
-design.TR                    = 1.75;  % Control and change
-design.nDummies              = 5;  % Nr of dummies
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Variables
-% Variables read out by the system and specific to the hardware
-try
-    ptb = PTBSettings(setUp, useEyetracker, stereomodeSequential);
-catch PTBError
-    error('Something went wrong setting up PTB: %s', PTBError.message);
-end
+%% Settings
+ptb = PTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
+myPaths = pathSettings(); % Paths
+design = designSettingsVisuals(ptb, myPaths); % Define design of all visually presented elements
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO reinclude (but with correct file)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); % Gamma correction %#ok<NASGU> 
 
-%% Paths
-myPaths.conditionPath = fullfile('..','condition');
-myPaths.stimuliLocation = fullfile('..','stimuli');
-myPaths.rawdataPath = fullfile('..','rawdata');
-myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
-
-%% Gamma correction
-cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); %#ok<NASGU>
-
-%% Design related
-design.stimSizeInDegrees        = 3.5;      % stimulus size in visual deg.
-design.frameSizeFactor         = 1.3;%1.1
-design.frameApertureFactor     = 2/3;
-design.fusionMaskInDegrees      = 8;        % surrounding fusion-aid frame (it is NOT a checkerboard)
-design.fixCrossInDegrees        = 0.2;      % Fixtion cross in degrees
-design.fixDotSizeInDegrees      = 0.1;
-design.fixDotFrameSizeInDegrees = 0.15; % 35?    % Frame around fixation dot% Fixation dot for no-report
-design.legendPictogramInDegrees = 0.5;
-
+%% Additional design elements
+design.TR                       = 1.75;  % Control and change
+design.nDummies                 = 5;  % Nr of dummies
 design.maxRunNr                 = 10;
 design.waitTillStartDuration    = 3;
-
-
-% Compute all screen-related design parameters
-design = computeDesignScreenPositions(ptb, design);
-
-% for color association legend
-[housePictogram,~,houseAlpha] = imread(fullfile(myPaths.conditionPath,'house_pictogram.png'));
-[facePictogram,~,faceAlpha] = imread(fullfile(myPaths.conditionPath,'face_pictogram.png'));
-housePictogram = cat(3,housePictogram,houseAlpha);
-facePictogram = cat(3,facePictogram,faceAlpha);
-design.housePictogramTexture = Screen('MakeTexture',ptb.window,housePictogram);
-design.facePictogramTexture = Screen('MakeTexture',ptb.window,facePictogram);
-
-
-% prepare fusion mask texture
-fusionMask = imread(fullfile(myPaths.conditionPath, 'background.jpg'));
-fusionMaskResized = imresize(fusionMask, [design.fusionMaskInPixelsX, design.fusionMaskInPixelsY]);
-design.backGroundTexture = Screen('MakeTexture', ptb.window, fusionMaskResized);
 
 %% Condition Table
 % Condition table
@@ -111,9 +75,10 @@ else
     ptb.Keys.house = ptb.Keys.left;
     ptb.Keys.face = ptb.Keys.right;
 end
-colors = [[102, 255, 0]; [0, 0, 135]];
+
 % Color: colors(1,:) for subjects 0/1 mod 4,
 %        colors(2,:) for subjects 2/3 mod 4
+colors = design.conditionColors;
 colorIdx = floor(mod(sub, 4) / 2) + 1;
 design.houseColor = colors(colorIdx, :);
 design.faceColor  = colors(3 - colorIdx, :);
@@ -132,10 +97,9 @@ log.task = condition;
         case "main experiment"
             % Run main experiment
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
-            eyeRun.subjectNr = log.sub;
-            eyeRun.runNr     = log.runNr;
-            eyeRun.report    = log.report;
-            if ptb.useEyetracker; ptb = eyetracking.startEyetracker(ptb, eyeRun);
+            if ptb.useEyetracker
+                eyeRun.subjectNr = log.sub;eyeRun.runNr=log.runNr;eyeRun.report= log.report;
+                ptb = eyetracking.startEyetracker(ptb, eyeRun);
             end
             [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
             save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)

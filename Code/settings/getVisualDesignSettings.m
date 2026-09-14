@@ -180,7 +180,7 @@ design.frameTexture = generate.createOApertureXFrame(...
     ptb.window);
 
 % create background fusion mask texture 
-fusionMask = imread(fullfile(myPaths.conditionPath, 'background.jpg'));
+fusionMask = imread(fullfile(myPaths.conditionPath, 'bw_frame.jpg'));
 fusionMaskResized = imresize(fusionMask, [design.fusionMaskInPixelsX, design.fusionMaskInPixelsY]);
 design.backGroundTexture = Screen('MakeTexture', ptb.window, fusionMaskResized);
 

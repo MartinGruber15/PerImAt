@@ -1,7 +1,7 @@
-function participantInfo = inputParticipantInformation(ptb, participantInfo)
+function participantInfo = participantInformation(keys, participantInfo)
 %inputSubID: get input from experimentor about subject information
 %   input:
-%       ptb - a struct containing key IDs with meaning
+%       keys - a struct containing key IDs with meaning
 %       participantInfo - a struct where information about the subject is stored
 %   output:
 %       participantInfo
@@ -15,10 +15,10 @@ function participantInfo = inputParticipantInformation(ptb, participantInfo)
             checkinput = true;
             while checkinput
                 participantInfo.isGerman = input('Does the subject understand german [y/n]? ','s');
-                if strcmp (participantInfo.isGerman, KbName(ptb.Keys.yes))
+                if strcmp (participantInfo.isGerman, KbName(keys.yes))
                     participantInfo.language = 'german';
                     checkinput = false;
-                elseif strcmp (participantInfo.isGerman, KbName(ptb.Keys.no))
+                elseif strcmp (participantInfo.isGerman, KbName(keys.no))
                     participantInfo.language = 'english';
                     checkinput = false;
                 else

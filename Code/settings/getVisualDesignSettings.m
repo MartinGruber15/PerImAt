@@ -1,4 +1,4 @@
-function design = designSettingsVisuals(ptb, myPaths)
+function design = getVisualDesignSettings(ptb, myPaths)
 design = struct(); % Initialize the design structure
 
 % Screen center

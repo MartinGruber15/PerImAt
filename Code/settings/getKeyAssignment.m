@@ -1,4 +1,4 @@
-function [design,ptb] = conditionAndKeyAssignment(design, ptb, subNr)
+function [design,ptb] = getKeyAssignment(design, ptb, subNr)
 % key assignment
 sub = str2double(subNr);
 if  mod(sub, 2) == 0

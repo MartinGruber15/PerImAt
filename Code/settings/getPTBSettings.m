@@ -1,4 +1,4 @@
-function ptb = PTBSettings(SetUp, useEyetracker, stereomodeSequential)
+function ptb = getPTBSettings(SetUp, useEyetracker, stereomodeSequential)
 %PTBSettings: reads out and sets values from/for Psychtoolbox and the
 %experiment
 %   input:
@@ -51,7 +51,7 @@ switch ptb.SetUp
         ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
         ptb.Keys.accept = KbName('Space');      ptb.KeyList2(ptb.Keys.accept)= double(1);
         % Get Keyboard indices
-        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Tastatur');
+        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Logitech USB Keyboard');
         % for some reason GetKeyboardIndices returns two indices
         % for the Keyboard. The physical device might offer several
         % interfaces to interact with it

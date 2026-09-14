@@ -46,14 +46,9 @@ for trial = 1:rows
     else
         catchType = "";
     end
-    if ~log.report
-        % Randomly select one valid pair
-        pairIndex = randi(size(design.fixDotValidPairs, 1));
-        selectedPair = design.fixDotValidPairs(pairIndex, :);
-    end
 
     %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
-    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType);
+    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType, log.report);
     if prevCondition ~= condition
         remindAssociation = true;
         prevCondition = condition; % Update previous condition for the next trial
@@ -96,7 +91,7 @@ for trial = 1:rows
         end
     else
         % No-report condition: fixation dots fade in
-        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,selectedPair, 0);
+        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, 0);
         stimOnset = Screen('Flip', ptb.window, taskEnd);
         stimOffset = stimOnset + design.stimulusPresentationTime;
         if ptb.useEyetracker
@@ -106,7 +101,7 @@ for trial = 1:rows
         vbl = stimOnset;
         for f = 1:design.fixDotFadeFrames
             alpha = design.fixDotTransparency * f / design.fixDotFadeFrames;
-            draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,selectedPair, alpha);
+            draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, alpha);
             vbl = Screen('Flip', ptb.window,vbl + (ptb.waitframes - 0.5) * ptb.ifi);
         end
         % From here on the dots are fully visible and there is time left
@@ -143,7 +138,7 @@ for trial = 1:rows
 
     trialStartTime = ITIOnset + design.ITI;
 
-
+    
     %% Save stimuli and timing
     log.data.condition{trial}       = condition;
     log.data.rightEye{trial}        = trialStim.rightEyeStim;
@@ -153,8 +148,8 @@ for trial = 1:rows
         log.data.response(trial)        = response;
         log.data.rt(trial)              = rt;
     else
-        leftBufferDotPos  = selectedPair(1);
-        rightBufferDotPos = selectedPair(2);
+        leftBufferDotPos  = trialStim.selectedPair(:,1);
+        rightBufferDotPos = trialStim.selectedPair(:,2);
         if strcmpi(trialStim.leftEyeStim, 'house')
             houseDotPos = leftBufferDotPos;
             faceDotPos  = rightBufferDotPos;
@@ -162,8 +157,8 @@ for trial = 1:rows
             faceDotPos  = leftBufferDotPos;
             houseDotPos = rightBufferDotPos;
         end
-        log.data.fixDotPosHouse(trial) = houseDotPos;
-        log.data.fixDotPosFace(trial)  = faceDotPos;
+        log.data.fixDotPosHouse{trial} = houseDotPos;
+        log.data.fixDotPosFace{trial}  = faceDotPos;
         log.data.fixDotCoordHouse{trial} = design.fixDotPositions(houseDotPos, :);
         log.data.fixDotCoordFace{trial}  = design.fixDotPositions(faceDotPos, :);
     end
@@ -188,7 +183,7 @@ else
 end
 end
 
-function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType)
+function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType,report)
 %% Determine the stimuli for the current trial
 %note: as the file has 8 entries but we dont have a color condition each
 %exact condition is repeated once. But tbh this does make sense so the runs
@@ -206,8 +201,13 @@ if ~isCatch
 else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
-    rightEyeStim = "catch_" + catchParts(2);
-    leftEyeStim = "catch_" + catchParts(2);
+    if report % in report condition, there is only mock rivalry
+        rightEyeStim = "catch_" + catchParts(2);
+        leftEyeStim = "catch_" + catchParts(2);
+    else % no report condition has real rivalry in catch trials
+        rightEyeStim = "catch_" + catchParts(2);
+        leftEyeStim = "catch_" + catchParts(3);
+    end
     leftImgName = leftEyeStim;
     rightImgName = rightEyeStim;
 end
@@ -236,6 +236,22 @@ switch condition
 
 end
 
+if ~report
+    % Randomly select one valid pair
+    pairIndex = randi(size(design.fixDotValidPairs, 1));
+    selectedPair = design.fixDotValidPairs(pairIndex, :);
+    if isCatch
+        if strcmp(catchParts(4), 'single')
+            % Pick one pair, but use its first position twice
+            selectedPair = [selectedPair(1), selectedPair(1)];
+        else
+            % Pick two different pairs
+            selectedPair = [selectedPair(1), selectedPair(1);
+                selectedPair(2), selectedPair(2)];
+        end
+    end
+end
+
 %% Load the respective images
 leftImage  = loadImage(myPaths.stimuliLocation, leftImgName);
 rightImage = loadImage(myPaths.stimuliLocation, rightImgName);
@@ -254,4 +270,5 @@ trialStim = struct( ...
     "cueTxt", cueTxt, ...
     "finalQText", finalQuestion,...
     "fixCrossColor", fixCrossColor);
+if ~report; trialStim.selectedPair = selectedPair;end
 end

@@ -1,4 +1,4 @@
-function myPaths = pathSettings()
+function myPaths = getPaths()
 myPaths.conditionPath = fullfile('..','condition');
 myPaths.stimuliLocation = fullfile('..','stimuli');
 myPaths.rawdataPath = fullfile('..','rawdata');

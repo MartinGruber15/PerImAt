@@ -21,9 +21,9 @@ stereomodeSequential = false;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Settings
-ptb = PTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
-myPaths = pathSettings(); % Paths
-design = designSettingsVisuals(ptb, myPaths); % Define design of all visually presented elements
+ptb = getPTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
+myPaths = getPaths(); % Paths
+design = getVisualDesignSettings(ptb, myPaths); % Define design of all visually presented elements
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO reinclude (but with correct file)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); % Gamma correction %#ok<NASGU> 
 
@@ -41,35 +41,13 @@ design.stimLookupTable = readtable(fullfile(myPaths.conditionPath,'stimLookupTab
 % Input subject number -> ID
 log.sub = input('Enter subject ID: ', 's');
 myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', log.sub]);
-
-% Check if subject folder already exists
-if isfolder(myPaths.subjectDirectory)
-    disp('-> Subject folder already EXISTS.')
-else
-    % create subject folder
-    mkdir(myPaths.subjectDirectory);
-    disp('-> Subject folder CREATED.')
-end
-
-
-% Create participantInfo.mat if not existent
-if exist(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'),'file') ~= 2
-    participantInfo.id = log.sub;
-    participantInfo.date = datetime;
-    participantInfo = input.participantInformation(ptb, participantInfo);
-
-    % participantInfo.mat speichern
-    save(fullfile(myPaths.subjectDirectory, 'participantInfo'),'participantInfo');
-else
-    fprintf('-> participantInfo.mat for subject %s exists.\n', log.sub);
-    load(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'));
-end
+participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub);
 
 %% Set key bindings
-[design,ptb] = conditionAndKeyAssignment(design, ptb, log.sub);
+[design,ptb] = getKeyAssignment(design, ptb, log.sub);
 
 %% Get instructions
-design = getInstructions(log,design,ptb,participantInfo);
+design = getInstructions(design,participantInfo);
 
 % Decide what to do
 % experiment or consent form
@@ -85,14 +63,13 @@ log.task = condition;
                 eyeRun.subjectNr = log.sub;eyeRun.runNr=log.runNr;eyeRun.report= log.report;
                 ptb = eyetracking.startEyetracker(ptb, eyeRun);
             end
-            [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo);
+            [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo, 'full');
             save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
-        case "imagery training" %TODO
+        case "imagery training" 
             % Input run number and part of the run
-
-            % Run experiment
-            onsetRivalryPearson(log, ptb, design, myPaths, participantInfo);
+            ptb.useEyetracker = false;
+            [~, ~, ~, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
 
         case "consent form"
              % Display consent form
@@ -104,3 +81,5 @@ log.task = condition;
 %    rethrow(ME)
 %end
 end
+
+% catch file no report: run, condition, cue, stimL, stimR, dots

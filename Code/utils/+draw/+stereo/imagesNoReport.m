@@ -39,10 +39,7 @@ function imagesNoReport(ptb, design, leftImage, rightImage, selectedPair, dotTra
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Get fixation-dot positions
-leftDotPos  = selectedPair(1);
-rightDotPos = selectedPair(2);
-leftDotCoord  = design.fixDotPositions(leftDotPos, :);
-rightDotCoord = design.fixDotPositions(rightDotPos, :);
+nPairs = size(selectedPair, 1);
 
 %% Select left-eye image buffer
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
@@ -57,8 +54,10 @@ Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
 Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
     design.fixCrossLineWidth,design.fixCrossColor,[design.centerX design.centerY]);
 % Fixation-dot (+frame)
-Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, leftDotPos),[],[],dotTransparency);
-
+for pairIdx = 1:nPairs
+    leftDotPos = selectedPair(pairIdx, 1);
+    Screen('DrawTexture', ptb.window,design.fixDotTexture, [],design.fixDotTextureRects(:, leftDotPos), [], [], dotTransparency);
+end
 
 %% Select right-eye image buffer
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
@@ -73,7 +72,10 @@ Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
 Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
     design.fixCrossLineWidth,design.fixCrossColor,[design.centerX design.centerY]);
 % Fixation-dot (+frame)
-Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, rightDotPos),[],[],dotTransparency);
+for pairIdx = 1:nPairs
+    rightDotPos = selectedPair(pairIdx, 2);
+    Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, rightDotPos),[],[],dotTransparency);
+end
 
 %% Finish drawing
 Screen('DrawingFinished', ptb.window);

@@ -196,8 +196,8 @@ if ~isCatch
     rightEyeStim = stimRow.rightEye{1};
     leftEyeStim = stimRow.leftEye{1};
     cue = stimRow.cue{1};
-    leftImgName  = leftEyeStim  + "_gray";
-    rightImgName = rightEyeStim + "_gray";
+    leftImgName  = leftEyeStim; %  + "_gray";
+    rightImgName = rightEyeStim; % + "_gray";
 else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
@@ -221,11 +221,11 @@ switch condition
         cueTxt = design.cueTextImagery;
         if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "perception"
-        taskStimulus = cue + "_30" + "_gray";
+        taskStimulus = cue + "_30";
         cueTxt = design.cueTextPerception;
         if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "attention"
-        taskStimulus = "superimposed_gray";
+        taskStimulus = "superimposed";
         cueTxt = design.cueTextAttention;
         if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "baseline"

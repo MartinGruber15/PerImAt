@@ -14,9 +14,7 @@ frameMask(:, 1:frameLineWidth) = true;
 frameMask(:, end-frameLineWidth+1:end) = true;
 frameColor255 = uint8(round(frameColor * 255));
 for c = 1:3
-    channel = image(:,:,c);
-    channel(frameMask) = frameColor255(c);
-    image(:,:,c) = channel;
+    image(:,:,c) = frameColor255(c);
 end
 
 %% Fixation dot
@@ -36,7 +34,7 @@ end
 %
 % We need an alpha channel so that the rectangular texture does not
 % obscure the stimulus. The frame and dot themselves are opaque.
-alpha = uint8((frameMask | dotMask) * 255);
+alpha = uint8(255 * ones(frameSize, frameSize));
 image = cat(3, image, alpha);
 %% Create PTB texture
 texture = Screen('MakeTexture', ptb.window, image);

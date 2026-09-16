@@ -6,12 +6,6 @@ image = zeros(frameSize, frameSize, 3, 'uint8');
 center = (frameSize + 1) / 2;
 
 %% Frame
-frameMask = false(frameSize, frameSize);
-
-frameMask(1:frameLineWidth, :) = true;
-frameMask(end-frameLineWidth+1:end, :) = true;
-frameMask(:, 1:frameLineWidth) = true;
-frameMask(:, end-frameLineWidth+1:end) = true;
 frameColor255 = uint8(round(frameColor * 255));
 for c = 1:3
     image(:,:,c) = frameColor255(c);

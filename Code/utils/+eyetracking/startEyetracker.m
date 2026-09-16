@@ -1,4 +1,4 @@
-function ptb = startEyetracker(ptb, eyeRun)
+function ptb = startEyetracker(ptb, eyeRun, dummymode)
 % Initialize EyeLink, calibrate, and start recording for one run.
 % eyeRun.subjectNr, eyeRun.runNr, eyeRun.report
 
@@ -13,20 +13,17 @@ unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 60');
 [ptb.et.window, ptb.et.windowRect] = PsychImaging('OpenWindow', ...
     ptb.screenNumber, ptb.BackgroundColor, [], [], [], 1);
 
-if ptb.eyelink.track == -1
-    dummymode = 1;
-else
-    dummymode = 0;
-end
-
 el = EyelinkInitDefaults(ptb.et.window);
 if ~EyelinkInit(dummymode, 1)
     Screen('Close', ptb.et.window);
     error('Eyelink initialization failed.');
 end
-
-[~, vs] = Eyelink('GetTrackerVersion');
-fprintf('Running experiment on a ''%s'' tracker.\n', vs);
+if dummymode
+    fprintf('*** EyeLink DUMMY MODE ***\n');
+else
+    [~, vs] = Eyelink('GetTrackerVersion');
+    fprintf('Running experiment on a ''%s'' tracker.\n', vs);
+end
 
 % Downsize area used for calibration, so all calibration points are
 % visible to the subject but the stimuli are still inside the recorded
@@ -83,6 +80,16 @@ if ptb.stereomode == 4
     Screen('SelectStereoDrawBuffer', ptb.et.window, 0);
 end
 EyelinkDoTrackerSetup(el);
+
+% Stop experiment if 'q' (quit) is being pressed
+[KeyIsDown, ~, keyCode, ~] = KbQueueCheck(ptb.Keyboard1);
+if KeyIsDown
+    if find(keyCode)==ptb.Keys.quit
+        disp('=> pressed QUIT')
+        return;
+    end
+end
+
 EyelinkDoDriftCorrection(el);
 
 Eyelink('StartRecording');

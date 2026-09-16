@@ -33,9 +33,10 @@ ptb.usbTrg = 1; % If 1 --> wait for scanner triggers & check USB inputs.
 ptb.Keys.escape = KbName('ESCAPE');     ptb.KeyList1(ptb.Keys.escape)= double(1);
 ptb.Keys.yes    = KbName('y');          ptb.KeyList1(ptb.Keys.yes)   = double(1);
 ptb.Keys.no     = KbName('n');          ptb.KeyList1(ptb.Keys.no)    = double(1);
+ptb.Keys.quit   = KbName('q');          ptb.KeyList1(ptb.Keys.no)    = double(1);
 ptb.Keys.debug  = 1;
 if stereomodeSequential
-    ptb.steremode = 1; % == sequential for BR + shutter glasses
+    ptb.stereomode = 1; % == sequential for BR + shutter glasses
     ptb.usedatapixx = true;
 else
     ptb.stereomode = 4; % == side by side for BR
@@ -85,6 +86,11 @@ switch ptb.SetUp
         % presses. Additionally the buttons for the binary answers are index
         % (button 4$) and middle finger (button 3#)
         % The KeyList must be filled with doubles
+        ptb.Keys.quit   = KbName ('escape'); ptb.KeyList2(ptb.Keys.quit) = double(1);
+        ptb.Keys.enter  = KbName ('return'); ptb.KeyList2(ptb.Keys.enter)  = double(1);
+        ptb.Keys.space  = KbName ('space'); ptb.KeyList2(ptb.Keys.space)   = double(1);
+        ptb.Keys.yes  = KbName ('y'); ptb.KeyList2(ptb.Keys.yes)  = double(1);
+        ptb.Keys.no  = KbName ('n'); ptb.KeyList2(ptb.Keys.no)  = double(1);
         ptb.Keys.trg    = KbName ('w');     ptb.KeyList2(ptb.Keys.trg)   = double(1); % The scanner sends 'w' as USB keyboard input (from keyboard 2)
         ptb.Keys.left   = KbName('4$');  ptb.KeyList2(ptb.Keys.left)  = double(1);
         ptb.Keys.right  = KbName('3#'); ptb.KeyList2(ptb.Keys.right) = double(1);
@@ -122,14 +128,9 @@ ptb.useEyetracker = useEyetracker; % stupid default
 if ptb.useEyetracker % If ET, then make calibration
     ptb.eyelink.track       = 1; % 0 - no tracking, -1 - dummymode
     ptb.key.sendToEyelink   = 1; % Send keypress to EyeLink-datafile, only if eyetracker is connected
-    %unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 60'); % we change the resolution using unix command xrandr to 60 hz. IMPORTANT: ONLY WORKS IF ProPixx is DP-0 and screen 1!!
-    %ptb = startEyetracker(ptb, data);
-    %Screen('Close', ptb.et.window);
-    %unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120'); % reset resolution and set back to 120 hz suing unix command xrandr
 else % Do nothing
     ptb.eyelink.track       = 0; % 0 - no tracking, -1 - dummymode
     ptb.key.sendToEyelink   = 0; % Send keypress to EyeLink-datafile, only if eyetracker is connected
-    %unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120'); % LM3 hotfix
 end
 %-------------------------------------------------------------------------%
 PsychImaging('PrepareConfiguration');                                     % standard first command

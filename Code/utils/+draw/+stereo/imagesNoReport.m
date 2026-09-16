@@ -58,6 +58,11 @@ for pairIdx = 1:nPairs
     leftDotPos = selectedPair(pairIdx, 1);
     Screen('DrawTexture', ptb.window,design.fixDotTexture, [],design.fixDotTextureRects(:, leftDotPos), [], [], dotTransparency);
 end
+% for synchronization; only if shutterglasses are used
+if ptb.usedatapixx
+    Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectLeftOn);
+    Screen('FillRect', ptb.window, [0, 0, 0], design.blueRectLeftOff);
+end
 
 %% Select right-eye image buffer
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
@@ -75,6 +80,10 @@ Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
 for pairIdx = 1:nPairs
     rightDotPos = selectedPair(pairIdx, 2);
     Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, rightDotPos),[],[],dotTransparency);
+end
+if ptb.usedatapixx
+    Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectRightOn);
+    Screen('FillRect', ptb.window, [0, 0, 0], design.blueRectRightOff);
 end
 
 %% Finish drawing

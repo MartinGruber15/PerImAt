@@ -17,6 +17,10 @@ DrawFormattedText(ptb.window, text, 'center', design.cueY, ptb.FontColor);
 Screen('DrawLines',ptb.window,design.fixCrossCoords,design.fixCrossLineWidth,fixCrossColor,[design.centerX design.centerY]);
 % Legend
 drawLegend(ptb, design, switchOrder);
+if ptb.usedatapixx
+    Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectLeftOn);
+    Screen('FillRect', ptb.window, [0, 0, 0], design.blueRectLeftOff);
+end
 
 % Right eye
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
@@ -31,6 +35,10 @@ Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
     design.fixCrossLineWidth,fixCrossColor,[design.centerX design.centerY]);
 % Legend
 drawLegend(ptb, design, switchOrder)
+if ptb.usedatapixx
+    Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectRightOn);
+    Screen('FillRect', ptb.window, [0, 0, 0], design.blueRectRightOff);
+end
 Screen('DrawingFinished', ptb.window);
 
 % Restore previous text size

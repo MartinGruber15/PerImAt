@@ -18,10 +18,10 @@ function [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, d
 %% Timing
 design.instructionWaitDuration  = 0.5;
 
-design.stimulusPresentationTime = 3 - ptb.ifi/2; % 1
-design.taskDuration             = 3 - ptb.ifi/2; % 6
+design.stimulusPresentationTime = 1 - ptb.ifi/2; % 1
+design.taskDuration             = 6 - ptb.ifi/2; % 6
 design.maxVividTime             = 2 - ptb.ifi/2; % 2
-design.ITI                      = 2 - ptb.ifi/2; % 5
+design.ITI                      = 5 - ptb.ifi/2; % 5
 design.maxReportTime            = 2 - ptb.ifi/2; % 2
 design.cueDuration              = 1 - ptb.ifi/2; % 1 (3 for every first in miniblock)
 

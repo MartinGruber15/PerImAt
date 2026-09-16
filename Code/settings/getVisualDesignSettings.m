@@ -59,7 +59,6 @@ design.frameRect = [ ...
     design.centerY + design.frameSizeInPixelsY/2];
 
 % Position of the fusion mask
-%TODO
 
 % Fixation cross coordinates relative to its center
 design.fixCrossCoords = [
@@ -139,6 +138,12 @@ design.facePictogramRect = [ ...
     design.legendPictogramX + design.legendPictogramSize, ...
     design.legendY2 + design.legendPictogramSize];
 
+% blue lines (only relevant for shutterglass synchronization)
+design.blueRectLeftOn   = [0,                 ptb.windowRect(4)-1, ptb.windowRect(3)/4,   ptb.windowRect(4)];
+design.blueRectLeftOff  = [ptb.windowRect(3)/4,   ptb.windowRect(4)-1, ptb.windowRect(3),     ptb.windowRect(4)];
+design.blueRectRightOn  = [0,                 ptb.windowRect(4)-1, ptb.windowRect(3)*3/4, ptb.windowRect(4)];
+design.blueRectRightOff = [ptb.windowRect(3)*3/4, ptb.windowRect(4)-1, ptb.windowRect(3),     ptb.windowRect(4)];
+
 %% Appearance of elements
 % stimulus frame
 design.frameThickness = 0.02;
@@ -152,7 +157,7 @@ design.fixCrossColor = ptb.black;
 design.conditionColors = [[255, 0, 0]; [0, 0, 135]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
-design.fixDotTransparency       = 0.5;
+design.fixDotTransparency       = 0.3; % 0.5
 design.fixDotColor              = [0.25, 0.25, 0.25];
 
 % fixation dot frame(s)

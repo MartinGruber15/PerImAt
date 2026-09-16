@@ -17,7 +17,8 @@ fprintf('Running BR experiment with set-up "%s"\n', setUp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.report = false;
 useEyetracker = false; 
-stereomodeSequential = false;
+stereomodeSequential = false; % true for shutter glasses at MPI
+dummymode = true; % eye tracker dummy mode
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Settings
@@ -61,7 +62,7 @@ log.task = condition;
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
             if ptb.useEyetracker
                 eyeRun.subjectNr = log.sub;eyeRun.runNr=log.runNr;eyeRun.report= log.report;
-                ptb = eyetracking.startEyetracker(ptb, eyeRun);
+                ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
             end
             [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo, 'full');
             save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)

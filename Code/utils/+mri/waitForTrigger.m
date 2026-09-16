@@ -8,7 +8,7 @@ function log = waitForTrigger(ptb, log, design)
     fprintf('\nWaiting for triggers...\n');
     % Clear old keyboard events
     KbQueueFlush(ptb.Keyboard1);if ptb.Keyboard2;KbQueueFlush(ptb.Keyboard2);end
-    KbQueueStart(ptb.Keyboard1);if ptb.Keyboard2KbQueueStart(ptb.Keyboard2);end
+    KbQueueStart(ptb.Keyboard1);if ptb.Keyboard2;KbQueueStart(ptb.Keyboard2);end
 
     while true
         [~, firstPress] = KbQueueCheck(ptb.Keyboard2);

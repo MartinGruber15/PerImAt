@@ -66,12 +66,13 @@ else
     log.data.fixDotCoordHouse = cell(rows,1);
     log.data.fixDotCoordFace  = cell(rows,1);
 end
-log.data.isCatchTrial           = false(rows,1);
+log.data.isCatchTrial         = false(rows,1);
+log.data.triggerTimes         = cell(rows,1); %TODO do we want this?
 
 
 %% Fusion alignment
 % Before every run
-participantInfo = display.stereo.alignFusion(ptb, participantInfo); 
+%participantInfo = display.stereo.alignFusion(ptb, participantInfo); %TODO: only exclude in scanner
 
 %% Trial Procedure
 
@@ -107,6 +108,7 @@ if strcmp(ptb.SetUp,'MPI')
     mri.waitForTrigger(ptb, log,design);
     RestrictKeysForKbCheck(ptb.restrictedKeyList) % TODO is this fine?
 end
+
 log = trialProcedureImageryAttention(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 
 %% Run is over

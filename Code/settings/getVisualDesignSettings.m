@@ -6,7 +6,7 @@ design.centerX = ptb.centerX;
 design.centerY = ptb.centerY;
 
 %% Displayed elements in visual degrees
-design.stimSizeInDegrees        = 3.5;      % stimulus size in visual deg.
+design.stimSizeInDegrees        = 4.5;      % stimulus size in visual deg.
 design.frameSizeFactor          = 1.3;%1.1  % frame around stimulus
 design.frameApertureFactor      = 2/3;      % circular aperture (=stimulus window)
 design.crossesSizeInDegrees     = 0.5;      % Crosses in the edge of the frame
@@ -14,8 +14,8 @@ design.crossesWidthInDegrees    = 0.08;     % width of crosses in frame edges
 design.crossesInsetInDegrees    = 0.15;     % distance of frame crosses from edges
 design.fusionMaskInDegrees      = 8;        % surrounding fusion-aid frame
 design.fixCrossInDegrees        = 0.2;      % Fixation cross in degrees
-design.fixDotSizeInDegrees      = 0.1;      % Fixation dots for no-report in degrees
-design.fixDotFrameSizeInDegrees = 0.15;%35? % Frame around fixation dot
+design.fixDotSizeInDegrees      = 0.3;      % Fixation dots for no-report in degrees
+design.fixDotFrameSizeInDegrees = 0.35;%35? % Frame around fixation dot
 design.legendPictogramInDegrees = 0.5;      % key assignment legend pictograms
 
 %% Convert visual degrees to pixels

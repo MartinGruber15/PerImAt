@@ -1,7 +1,7 @@
 function main(setUp)
-Screen('Preference', 'SkipSyncTests', 1); %TODO
-opacity = 0.8;
-PsychDebugWindowConfiguration([], opacity)
+%Screen('Preference', 'SkipSyncTests', 1); %TODO
+%opacity = 0.8;
+%PsychDebugWindowConfiguration([], opacity)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
 % Author: Martin Gruber
@@ -10,14 +10,14 @@ PsychDebugWindowConfiguration([], opacity)
 
 %% Choose the experiment setup
 % CIN-personal, CIN-experimentroom, MPI
-if nargin < 1 || isempty(setUp); setUp = 'CIN-personal';end
+if nargin < 1 || isempty(setUp); setUp = 'MPI';end
 addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.report = false;
 useEyetracker = false; 
-stereomodeSequential = false; % true for shutter glasses at MPI
+stereomodeSequential = true; % true for shutter glasses at MPI
 dummymode = true; % eye tracker dummy mode
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

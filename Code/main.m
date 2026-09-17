@@ -1,7 +1,8 @@
 function main(setUp)
-%Screen('Preference', 'SkipSyncTests', 1); %TODO
-%opacity = 0.8;
-%PsychDebugWindowConfiguration([], opacity)
+Screen('Preference', 'SkipSyncTests', 1); %TODO
+Screen('Preference', 'Verbosity', 1);  % Only Errors + warnings
+opacity = 0.8;
+PsychDebugWindowConfiguration([], opacity)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
 % Author: Martin Gruber
@@ -10,29 +11,44 @@ function main(setUp)
 
 %% Choose the experiment setup
 % CIN-personal, CIN-experimentroom, MPI
-if nargin < 1 || isempty(setUp); setUp = 'MPI';end
+if nargin < 1 || isempty(setUp); setUp = 'CIN-personal';end
 addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-log.report = false;
-useEyetracker = false; 
-stereomodeSequential = true; % true for shutter glasses at MPI
-dummymode = true; % eye tracker dummy mode
+log.reportCond = reportCondition.report;
+offline = true;
+useEyetracker = false;
+dummymode = false; % eye tracker dummy mode
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if offline
+    stereomodeSequential = false; % true for shutter glasses at MPI
+    design.maxRunNr                 = 5;
+else
+    stereomodeSequential            = true; % true for shutter glasses at MPI
+    design.TR                       = 1.75;  % Control and change
+    design.nDummies                 = 5;  % Nr of dummies
+    design.maxRunNr                 = 10;
+end
+%log.dual = true;
+%TODO online design setup vs offline setup (e.g. set stereomode variable)
+% Offline
+%if log.dual;log.report=true;end
+%maxrunNr = ...
+%
 
 %% Settings
 ptb = getPTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
 myPaths = getPaths(); % Paths
-design = getVisualDesignSettings(ptb, myPaths); % Define design of all visually presented elements
+design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO reinclude (but with correct file)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); % Gamma correction %#ok<NASGU> 
-
+if offline
+    %cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); % Gamma correction %#ok<NASGU> 
+end
 %% Additional design elements
-design.TR                       = 1.75;  % Control and change
-design.nDummies                 = 5;  % Nr of dummies
-design.maxRunNr                 = 10;
 design.waitTillStartDuration    = 3;
+
 
 %% Condition Table
 % Condition table
@@ -52,25 +68,48 @@ design = getInstructions(design,participantInfo);
 
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["main experiment", "imagery training","consent form"]);
+condition = input.chooseOption(["offline experiment", "online experiment","offline training","online training","consent form"]);
 log.task = condition;
+if log.reportCond == reportCondition.report
+    log.suffix = 'r';
+elseif log.reportCond == reportCondition.noReport
+    log.suffix = 'nr';
+else 
+    log.suffix = 'du';
+end
 %% Switch case for different tasks
+ptb.fixCrossCoords = design.fixCrossCoords;
 %try
     switch condition
-        case "main experiment"
+        case "offline experiment"
             % Run main experiment
-            log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory);
+            log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
             if ptb.useEyetracker
-                eyeRun.subjectNr = log.sub;eyeRun.runNr=log.runNr;eyeRun.report= log.report;
+                eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
                 ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
             end
-            [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo, 'full');
-            save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
+            [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full');
+            %save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
+        
+        case "online experiment"
+            % Run main experiment
+            log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
+            if ptb.useEyetracker
+                eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
+                ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
+            end
+            [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full');
+            %save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
-        case "imagery training" 
+        case "offline training" 
             % Input run number and part of the run
             ptb.useEyetracker = false;
-            [~, ~, ~, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
+            [~, ~, ~, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
+
+        case "online training" 
+            % Input run number and part of the run
+            ptb.useEyetracker = false;
+            [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
 
         case "consent form"
              % Display consent form
@@ -78,6 +117,13 @@ log.task = condition;
             save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]),'log');
     end
 %catch ME
+%    if ptb.useEyetracker
+%        eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
+%    end
+%    if ptb.usedatapixx
+%        Datapixx('Close');
+%    end
+%    Screen('CloseAll');
 %    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
 %    rethrow(ME)
 %end

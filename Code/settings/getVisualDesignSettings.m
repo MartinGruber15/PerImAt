@@ -1,6 +1,7 @@
-function design = getVisualDesignSettings(ptb, myPaths)
-design = struct(); % Initialize the design structure
-
+function design = getVisualDesignSettings(ptb, myPaths, design)
+if nargin < 3
+    design = struct(); % Initialize the design structure
+end
 % Screen center
 design.centerX = ptb.centerX;
 design.centerY = ptb.centerY;

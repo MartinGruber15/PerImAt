@@ -1,4 +1,4 @@
-function [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, design, myPaths, participantInfo,modus)
+function [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,modus)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This experiment ...
@@ -18,10 +18,10 @@ function [log, ptb, design, participantInfo] = imageryAttentionOnset(log, ptb, d
 %% Timing
 design.instructionWaitDuration  = 0.5;
 
-design.stimulusPresentationTime = 1 - ptb.ifi/2; % 1
-design.taskDuration             = 6 - ptb.ifi/2; % 6
+design.stimulusPresentationTime = 1.5 - ptb.ifi/2; % 1
+design.taskDuration             = 1 - ptb.ifi/2; % 6
 design.maxVividTime             = 2 - ptb.ifi/2; % 2
-design.ITI                      = 5 - ptb.ifi/2; % 5
+design.ITI                      = 1 - ptb.ifi/2; % 5
 design.maxReportTime            = 2 - ptb.ifi/2; % 2
 design.cueDuration              = 1 - ptb.ifi/2; % 1 (3 for every first in miniblock)
 
@@ -31,48 +31,62 @@ design.cueDuration              = 1 - ptb.ifi/2; % 1 (3 for every first in minib
 % the order of these blocks has to be randomized and each block contains a
 % randomized sequence of the 8 (4) possible trials
 % first, we make sure we have catchtrials table
-if log.report; catchFilename = "catchTrialOrder.csv"; else; catchFilename = "catchTrialOrderNR.csv";end
+switch log.reportCond
+    case reportCondition.report
+        catchFilename = "catchTrialOrderR.csv";
+    case reportCondition.dual
+        catchFilename = "catchTrialOrderDual.csv";
+    case reportCondition.noReport
+        catchFilename = "catchTrialOrderNR.csv";
+end
+isReport = log.reportCond == reportCondition.report; % no-report catch trials for no-report and dual
 catchFile = fullfile(myPaths.subjectDirectory, catchFilename);
 if ~isfile(catchFile)
-    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr, catchFilename, log.report);
+    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr, catchFilename, isReport);
 end
 catchTable = readtable(catchFile);
 conditions = ["imagery", "attention", "perception", "baseline"];
 if strcmp(modus,'full')
-    trialSequence = buildTrialSequence(design.stimLookupTable, conditions, catchTable, log.runNr, log.report);
+    trialSequence = buildTrialSequence(design.stimLookupTable, conditions, catchTable, log.runNr, isReport);
 else
     trialSequence = buildTestTrialSequence(design.stimLookupTable, conditions);
 end
 
 rows=height(trialSequence);
+rows = 2;
 
 %% Empty cell arrays to save trial information
 log.data.condition              = cell(rows,1);
 log.data.leftEye                = cell(rows,1);
 log.data.rightEye               = cell(rows,1);
 log.data.cue                    = cell(rows,1);
-log.data.stimOnset              = zeros(rows,1);
-log.data.stimOffset             = zeros(rows,1);
+log.data.rating                 = cell(rows,1);
 log.data.vividResponse          = zeros(rows,1);
 log.data.vividRT                = zeros(rows,1);
-log.data.rating                 = cell(rows,1);
-if log.report
-    log.data.response               = zeros(rows,1);
+if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
+    log.data.response               = cell(rows,1);
     log.data.rt                     = zeros(rows,1);
     log.data.perceived              = cell(rows,1);
-else
+    log.data.isAmbiguos          = false(rows,1);
+end
+if (log.reportCond == reportCondition.noReport) || (log.reportCond == reportCondition.dual)
     log.data.fixDotPosHouse   = cell(rows,1);
     log.data.fixDotPosFace    = cell(rows,1);
     log.data.fixDotCoordHouse = cell(rows,1);
     log.data.fixDotCoordFace  = cell(rows,1);
 end
 log.data.isCatchTrial         = false(rows,1);
-log.data.triggerTimes         = cell(rows,1); %TODO do we want this?
+
+log.data.cueOnset             = zeros(rows,1);
+log.data.BROnset              = zeros(rows,1);
+log.data.responseOnset        = zeros(rows,1);
+log.data.questionOnset        = zeros(rows,1);
+log.data.ITIOnset             = zeros(rows,1);
 
 
 %% Fusion alignment
 % Before every run
-%participantInfo = display.stereo.alignFusion(ptb, participantInfo); %TODO: only exclude in scanner
+participantInfo = display.stereo.alignFusion(ptb, participantInfo);
 
 %% Trial Procedure
 
@@ -104,49 +118,57 @@ display.stereo.instruction(ptb, design.Introduction, design.instructionWaitDurat
 %displayStereoInstruction(ptb, design.waitTillStart, design.waitTillStartDuration, true);
 
 %% Main Experiment<
-if strcmp(ptb.SetUp,'MPI')
-    mri.waitForTrigger(ptb, log,design);
-    RestrictKeysForKbCheck(ptb.restrictedKeyList) % TODO is this fine?
-end
-
-log = trialProcedureImageryAttention(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
+log = trialProcedurePerImAtOffline(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 
 %% Run is over
 display.stereo.instruction(ptb, design.RunIsOver, design.instructionWaitDuration, false);
-disp(log.data)
 
 %% End of experiment
 %% Save data
-if log.report
-    fileName = ['sub-' log.sub '_task-' sprintf('_run-%02d',log.runNr)];
-else
-    fileName = ['sub-' log.sub '_task-' sprintf('_run-%02d',log.runNr) 'nr'];
+if strcmp(modus,'training'); prefix='_train_';else;prefix='';end
+fileName = ['sub-' log.sub prefix sprintf('_run-%02d',log.runNr) '_' log.suffix];
+
+% Convert button presses from key ids to the perceived (house,face,mixed)
+if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
+    response = log.data.response;
+    for i = 1:numel(response)
+        if isempty(response{i})
+            log.data.perceived{i} = 'mixed';
+        else
+            firstResponse = response{i}(1);
+            if firstResponse == ptb.Keys.house
+                log.data.perceived{i} = 'house';
+            elseif firstResponse == ptb.Keys.face
+                log.data.perceived{i} = 'face';
+            elseif firstResponse == 0 || firstResponse == ptb.Keys.accept
+                log.data.perceived{i} = 'mixed';
+            end
+        end
+    end
+    % Convert response vectors to comma-separated strings for CSV
+    log.data.response = cellfun(@(x) strjoin(string(x), ','),log.data.response,'UniformOutput', false);
 end
-% Convert button presses from key ids to the perceived (rect,circle,house,face,mixed)
-if log.report
-    log.data.perceived(find(log.data.response==(ptb.Keys.house))) = {'house'};
-    log.data.perceived(find(log.data.response==ptb.Keys.face)) = {'face'};
-    log.data.perceived(find(log.data.response==0 | log.data.response==ptb.Keys.accept)) = {'mixed'};
+if (log.reportCond == reportCondition.noReport) || (log.reportCond == reportCondition.dual)
+    log.data.fixDotPosHouse = cellfun(@(x) strjoin(string(x), ','),log.data.fixDotPosHouse,'UniformOutput', false);
+    log.data.fixDotPosFace = cellfun(@(x) strjoin(string(x), ','),log.data.fixDotPosFace,'UniformOutput', false);
+    log.data.fixDotCoordHouse = cellfun(@(x) strjoin(string(x), ','),log.data.fixDotCoordHouse,'UniformOutput', false);
+    log.data.fixDotCoordFace = cellfun(@(x) strjoin(string(x), ','),log.data.fixDotCoordFace,'UniformOutput', false);
 end
+
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.left))) = {'1'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'2'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.right))) = {'3'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.down))) = {'4'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.accept))) = {'5'};
 
-
 % save the data to csv file
-if strcmp(modus,'full')
-    responseTable = struct2table(log.data);
-    writetable(responseTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']));
-end
+responseTable = struct2table(log.data);
+writetable(responseTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']), 'Delimiter',';');
 
 %% close open connections and screen
 eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
-if ptb.usedatapixx
-    Datapixx('Close');
-end
-Screen('CloseAll')
+
+Screen('CloseAll');
 %ListenChar(1); % enable input to matlab windows
 % Experiment ended without errors
 log.end = 'Success';
@@ -204,7 +226,6 @@ end
 % Randomize order of the four blocks and concatenate
 order = randperm(4);
 trialSequence = vertcat(sets{order});
-disp(trialSequence)
 end
 
 

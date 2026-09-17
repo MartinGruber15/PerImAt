@@ -1,6 +1,6 @@
 function ptb = startEyetracker(ptb, eyeRun, dummymode)
 % Initialize EyeLink, calibrate, and start recording for one run.
-% eyeRun.subjectNr, eyeRun.runNr, eyeRun.report
+% eyeRun.subjectNr, eyeRun.runNr, eyeRun.suffix
 
 if ~ptb.eyelink.track
     return;
@@ -54,12 +54,7 @@ Eyelink('command', 'link_sample_data = LEFT,RIGHT,GAZE,AREA');
 % Make sure that we get gaze data from the Eyelink
 Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,AREA');
 
-if eyeRun.report
-    suffix = 'r';
-else
-    suffix = 'nr';
-end
-ptb.eyelink.edfFile = sprintf('s%02dr%02d%s', eyeRun.subjectNr, eyeRun.runNr, suffix);
+ptb.eyelink.edfFile = sprintf('s%02dr%02d%s', eyeRun.subjectNr, eyeRun.runNr, eyeRun.suffix);
 
 status = Eyelink('OpenFile', [ptb.eyelink.edfFile '.edf']);
 if status ~= 0

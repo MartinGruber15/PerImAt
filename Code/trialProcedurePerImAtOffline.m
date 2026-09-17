@@ -1,4 +1,4 @@
-function log = trialProcedureImageryAttention(log, design, ptb, myPaths, stimLookupTable, trialSequence, rows)
+function log = trialProcedurePerImAtOffline(log, design, ptb, myPaths, stimLookupTable, trialSequence, rows)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Funktion to display and handle the trial sequence determined in
 % onsetRivalryBrascamp and collect the corresponding data.
@@ -32,6 +32,8 @@ remindAssociation = true;
 
 % Loop trough all trials
 for trial = 1:rows
+    KbQueueFlush(ptb.Keyboard2);
+    events = struct('Time', {}, 'Keycode', {});
     %% Determine the stimuli for the current trial
     % Extract trialID and load stimuli
     trialID   = trialSequence.trialID(trial);
@@ -47,8 +49,7 @@ for trial = 1:rows
         catchType = "";
     end
 
-    %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
-    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType, log.report);
+    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType, log.reportCond);
     if prevCondition ~= condition
         remindAssociation = true;
         prevCondition = condition; % Update previous condition for the next trial
@@ -81,31 +82,22 @@ for trial = 1:rows
         Eyelink('Message', sprintf('TASK_ONSET trial=%d', trial));
     end
     % Draw the BR stimuli
-    if log.report
+    if log.reportCond == reportCondition.report
         KbQueueFlush(ptb.Keyboard2);
         draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage);
         stimOnset = Screen('Flip', ptb.window, taskEnd);
         stimOffset = stimOnset + design.stimulusPresentationTime;
         if ptb.useEyetracker
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s report=1 left=%s right=%s',trial, condition,trialStim.leftEyeStim, trialStim.rightEyeStim));
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=report left=%s right=%s',trial, condition,trialStim.leftEyeStim, trialStim.rightEyeStim));
         end
     else
         % No-report condition: fixation dots fade in
-        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, 0);
+        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, design.fixDotTransparency);
         stimOnset = Screen('Flip', ptb.window, taskEnd);
         stimOffset = stimOnset + design.stimulusPresentationTime;
         if ptb.useEyetracker
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s report=0 left=%s right=%s',trial, condition,trialStim.leftEyeStim, trialStim.rightEyeStim));
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim));
         end
-        % Fade-in
-        vbl = stimOnset;
-        for f = 1:design.fixDotFadeFrames
-            alpha = design.fixDotTransparency * f / design.fixDotFadeFrames;
-            draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, alpha);
-            vbl = Screen('Flip', ptb.window,vbl + (ptb.waitframes - 0.5) * ptb.ifi);
-        end
-        % From here on the dots are fully visible and there is time left
-        % for drawing the next blanks
     end
     % draw response phase (only fixation cross)
     draw.stereo.blanks(ptb,design);
@@ -117,24 +109,24 @@ for trial = 1:rows
     % draw vividness question (already during response phase)
     draw.stereo.fixCrossPlusText(ptb,design, trialStim.finalQText, ptb.FontColor);
     %collect the response
-    if log.report
-        [response, rt] = input.getFirstResponse(ptb, stimOnset, responseEnd);
+    if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
+        [response, rt, events,ambiguous] = input.getFirstKeyEventAmbiguous(ptb.Keyboard2,events, stimOnset, responseEnd);
     else
         WaitSecs('UntilTime',responseEnd);
     end
-    vividOnset = Screen('Flip', ptb.window);
-    vividEnd = vividOnset + design.maxVividTime; % allow response during ITI
+    questionOnset = Screen('Flip', ptb.window);
+    questionEnd = questionOnset + design.maxVividTime; % allow response during ITI
     if ptb.useEyetracker
         Eyelink('Message', sprintf('VIVIDNESS_ONSET trial=%d', trial));
     end
-    % draw ITI (blank)
+    % draw ITI (blank) %TODO draw mask instead
     draw.stereo.blanks(ptb, design)
-    ITIOnset = Screen('Flip', ptb.window, vividEnd);
+    ITIOnset = Screen('Flip', ptb.window, questionEnd);
     if ptb.useEyetracker
         Eyelink('Message', sprintf('ITI_ONSET trial=%d', trial));
     end
     %collect vividness response
-    [vividResponse, vividRT] = input.getFirstResponse(ptb, vividOnset, vividEnd + design.ITI);
+    [vividResponse, vividRT, ~] = input.getFirstKeyEvent(ptb.Keyboard2,events, questionOnset, questionEnd + design.ITI);
 
     trialStartTime = ITIOnset + design.ITI;
 
@@ -144,10 +136,8 @@ for trial = 1:rows
     log.data.rightEye{trial}        = trialStim.rightEyeStim;
     log.data.leftEye{trial}         = trialStim.leftEyeStim;
     log.data.cue{trial}             = trialStim.cue;
-    if log.report
-        log.data.response(trial)        = response;
-        log.data.rt(trial)              = rt;
-    else
+
+    if (log.reportCond == reportCondition.noReport) || (log.reportCond == reportCondition.dual)
         leftBufferDotPos  = trialStim.selectedPair(:,1);
         rightBufferDotPos = trialStim.selectedPair(:,2);
         if strcmpi(trialStim.leftEyeStim, 'house')
@@ -162,11 +152,19 @@ for trial = 1:rows
         log.data.fixDotCoordHouse{trial} = design.fixDotPositions(houseDotPos, :);
         log.data.fixDotCoordFace{trial}  = design.fixDotPositions(faceDotPos, :);
     end
-    log.data.stimOnset(trial)       = stimOnset;
-    log.data.stimOffset(trial)      = stimOffset;
+    if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
+         log.data.response{trial}        = response;
+         log.data.rt(trial)              = rt;
+         log.data.isAmbiguos(trial)      = ambiguous;
+    end
     log.data.vividResponse(trial)   = vividResponse;
     log.data.vividRT(trial)         = vividRT;
     log.data.isCatchTrial(trial)    = isCatch;
+    log.data.cueOnset(trial)             = cueOnset;
+    log.data.BROnset(trial)              = stimOnset;
+    log.data.responseOnset(trial)        = stimOffset;
+    log.data.questionOnset(trial)       = questionOnset;
+    log.data.ITIOnset(trial)             = ITIOnset;
 
 
 end
@@ -183,7 +181,7 @@ else
 end
 end
 
-function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType,report)
+function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType,reportCond)
 %% Determine the stimuli for the current trial
 %note: as the file has 8 entries but we dont have a color condition each
 %exact condition is repeated once. But tbh this does make sense so the runs
@@ -201,7 +199,7 @@ if ~isCatch
 else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
-    if report % in report condition, there is only mock rivalry
+    if reportCond == reportCondition.report% in report condition, there is only mock rivalry
         rightEyeStim = "catch_" + catchParts(2);
         leftEyeStim = "catch_" + catchParts(2);
     else % no report condition has real rivalry in catch trials
@@ -236,7 +234,7 @@ switch condition
 
 end
 
-if ~report
+if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual)
     % Randomly select one valid pair
     pairIndex = randi(size(design.fixDotValidPairs, 1));
     selectedPair = design.fixDotValidPairs(pairIndex, :);
@@ -270,5 +268,5 @@ trialStim = struct( ...
     "cueTxt", cueTxt, ...
     "finalQText", finalQuestion,...
     "fixCrossColor", fixCrossColor);
-if ~report; trialStim.selectedPair = selectedPair;end
+if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual); trialStim.selectedPair = selectedPair;end
 end

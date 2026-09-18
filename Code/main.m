@@ -78,7 +78,6 @@ else
     log.suffix = 'du';
 end
 %% Switch case for different tasks
-ptb.fixCrossCoords = design.fixCrossCoords;
 %try
     switch condition
         case "offline experiment"

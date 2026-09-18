@@ -53,7 +53,6 @@ else
 end
 
 rows=height(trialSequence);
-rows = 2;
 
 %% Empty cell arrays to save trial information
 log.data.condition              = cell(rows,1);
@@ -78,6 +77,7 @@ end
 log.data.isCatchTrial         = false(rows,1);
 
 log.data.cueOnset             = zeros(rows,1);
+log.data.taskOnset            = zeros(rows,1);
 log.data.BROnset              = zeros(rows,1);
 log.data.responseOnset        = zeros(rows,1);
 log.data.questionOnset        = zeros(rows,1);

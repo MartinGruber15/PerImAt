@@ -114,22 +114,21 @@ for trial = 1:rows
     else
         WaitSecs('UntilTime',responseEnd);
     end
-    questionOnset = Screen('Flip', ptb.window);
+    questionOnset = Screen('Flip', ptb.window, responseEnd);
     questionEnd = questionOnset + design.maxVividTime; % allow response during ITI
     if ptb.useEyetracker
         Eyelink('Message', sprintf('VIVIDNESS_ONSET trial=%d', trial));
     end
     % draw ITI (blank) %TODO draw mask instead
-    draw.stereo.blanks(ptb, design)
+    [leftNoise, rightNoise] =generate.createStereoGaussianNoiseTextures(ptb, design);
+    draw.stereo.textures(ptb, design, leftNoise, rightNoise);
     ITIOnset = Screen('Flip', ptb.window, questionEnd);
     if ptb.useEyetracker
         Eyelink('Message', sprintf('ITI_ONSET trial=%d', trial));
     end
-    %collect vividness response
-    [vividResponse, vividRT, ~] = input.getFirstKeyEvent(ptb.Keyboard2,events, questionOnset, questionEnd + design.ITI);
-
+    lastNoiseFlip = display.stereo.gaussianNoise(ptb,design,ITIOnset,design.ITI, leftNoise, rightNoise);
+    [vividResponse, vividRT, ~] = input.readFirstKeyEvent(ptb.Keyboard2,events, questionOnset, lastNoiseFlip); % records only until last flip to not block preparation of last trial ->100ms
     trialStartTime = ITIOnset + design.ITI;
-
     
     %% Save stimuli and timing
     log.data.condition{trial}       = condition;
@@ -161,12 +160,12 @@ for trial = 1:rows
     log.data.vividRT(trial)         = vividRT;
     log.data.isCatchTrial(trial)    = isCatch;
     log.data.cueOnset(trial)             = cueOnset;
+    log.data.taskOnset(trial)       = taskOnset;
     log.data.BROnset(trial)              = stimOnset;
-    log.data.responseOnset(trial)        = stimOffset;
+    log.data.responseOnset(trial)        = responseOnset;
     log.data.questionOnset(trial)       = questionOnset;
     log.data.ITIOnset(trial)             = ITIOnset;
-
-
+    
 end
 end
 

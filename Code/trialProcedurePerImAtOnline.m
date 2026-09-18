@@ -67,6 +67,9 @@ for trial = 1:rows
         cueDuration = design.cueDuration;
     end
     cueOnset = Screen('Flip', ptb.window, trialStartTime);
+
+    fprintf('Trial %d | cue delay:     %.2f ms\n', trial, (cueOnset-trialStartTime)*1000);
+
     cueEnd = cueOnset + cueDuration;
     if ptb.useEyetracker
         Eyelink('Message', sprintf('CUE_ONSET trial=%d condition=%s',trial, condition));
@@ -107,18 +110,23 @@ for trial = 1:rows
     if ptb.useEyetracker
         Eyelink('Message', sprintf('RIVALRY_OFFSET trial=%d', trial));
     end
-    % draw vividness question (already during response phase)
-    draw.stereo.blanks(ptb, design)
+    % draw first noise mask for ITI (already during response phase)
+    [leftNoise, rightNoise] =generate.createStereoGaussianNoiseTextures(ptb, design);
+    draw.stereo.textures(ptb, design, leftNoise, rightNoise);
     %collect the response
     if log.reportCond == reportCondition.report
         [response, rt, events, ambiguous] = input.getFirstKeyEventAmbiguous(ptb.Keyboard2,events,stimOnset, responseEnd, ptb.restrictedKeyList);
     else
         WaitSecs('UntilTime',responseEnd);
     end
-    ITIOnset = Screen('Flip', ptb.window);
+    maskOnset = Screen('Flip', ptb.window, responseEnd);
+    maskOffset = maskOnset + design.maskDuration;
     if ptb.useEyetracker
-        Eyelink('Message', sprintf('ITI_ONSET trial=%d', trial));
+        Eyelink('Message', sprintf('Mask_ONSET trial=%d', trial));
     end
+    display.stereo.gaussianNoise(ptb,design,maskOnset,design.maskDuration, leftNoise, rightNoise);
+    draw.stereo.blanks(ptb, design)
+    ITIOnset = Screen('Flip', ptb.window, maskOffset);
     trialStartTime = ITIOnset + design.ITI;
     
     %% Save stimuli and timing
@@ -145,12 +153,20 @@ for trial = 1:rows
         log.data.fixDotCoordHouse{trial} = design.fixDotPositions(houseDotPos, :);
         log.data.fixDotCoordFace{trial}  = design.fixDotPositions(faceDotPos, :);
     end
-    log.data.isCatchTrial(trial)    = isCatch;
-    log.data.cueOnset(trial)             = cueOnset;
-    log.data.BROnset(trial)              = stimOnset;
-    log.data.responseOnset(trial)        = stimOffset;
-    log.data.ITIOnset(trial)             = ITIOnset;
+    log.data.isCatchTrial(trial)        = isCatch;
+    log.data.cueOnset(trial)            = cueOnset;
+    log.data.taskOnset(trial)           = taskOnset;
+    log.data.BROnset(trial)             = stimOnset;
+    log.data.responseOnset(trial)       = responseOnset;
+    log.data.maskOnset(trial)           = maskOnset;
+    log.data.ITIOnset(trial)            = ITIOnset;
     log.data.triggerTimes{trial} = input.getAllTriggers(ptb.Keyboard2,events, ptb.Keys.trg);
+    
+    fprintf('Trial %d | cue:     %.2f ms\n', trial, (1 - (taskOnset - cueOnset))*1000);
+    fprintf('Trial %d | task:    %.2f ms\n', trial, (2 - (stimOnset - taskOnset))*1000);
+    fprintf('Trial %d | br: %.2f ms\n', trial, (1.5-(responseOnset - stimOnset))*1000);
+    fprintf('Trial %d | br response:    %.2f ms\n', trial, (2-(maskOnset - stimOffset))*1000);
+    fprintf('Trial %d | mask:          %.2f ms\n', trial, (2-(ITIOnset - maskOnset))*1000);
     
 end
 end

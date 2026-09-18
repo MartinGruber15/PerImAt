@@ -23,7 +23,7 @@ design.taskDuration             = 2 - ptb.ifi/2; % 6
 design.ITI                      = 2 - ptb.ifi/2; % 5
 design.maxReportTime            = 2 - ptb.ifi/2; % 2
 design.cueDuration              = 1 - ptb.ifi/2; % 1 (3 for every first in miniblock)
-
+design.maskDuration             = 2 - ptb.ifi/2;
 
 %% Create a random sequence for the trials
 % we have 4 conditions with baseline only having half the trials
@@ -50,7 +50,7 @@ else
 end
 
 rows=height(trialSequence);
-rows = 2; %TODO remove
+rows = 3; %TODO remove
 
 %% Empty cell arrays to save trial information
 log.data.condition              = cell(rows,1);
@@ -72,8 +72,10 @@ log.data.isCatchTrial         = false(rows,1);
 log.data.triggerTimes         = cell(rows,1);
 
 log.data.cueOnset             = zeros(rows,1);
+log.data.taskOnset            = zeros(rows,1);
 log.data.BROnset              = zeros(rows,1);
 log.data.responseOnset        = zeros(rows,1);
+log.data.maskOnset            = zeros(rows,1);
 log.data.ITIOnset             = zeros(rows,1);
 
 
@@ -108,6 +110,9 @@ display.stereo.instruction(ptb, design.Introduction, design.instructionWaitDurat
 
 %% Main Experiment<
 %only for debug
+%design.nDummies                 = 5;
+%ptb.Keys.trg    = KbName ('w');     ptb.KeyList2(ptb.Keys.trg)   = double(1); % The scanner sends 'w' as USB keyboard input (from keyboard 2)
+
 log = mri.waitForTrigger(ptb, log,design);
 
 log = trialProcedurePerImAtOnline(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);

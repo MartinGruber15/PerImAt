@@ -71,29 +71,29 @@ design.fixCrossCoords = [
 design.fixDotDistanceInPixels = min(design.stimSizeInPixelsX / 3,design.stimSizeInPixelsY / 3) / 2;
 d = design.fixDotDistanceInPixels;
 % screen coordinates of the 8 possible positions
-% 5 2 6
-% 1 + 3
-% 7 4 8
+% 1 2 3
+% 8 + 4
+% 7 6 5
 design.fixDotPositions = [
-    design.centerX - d, design.centerY;      % 1 = left
+    design.centerX - d, design.centerY - d;  % 1 = top-left
     design.centerX,     design.centerY - d;  % 2 = top
-    design.centerX + d, design.centerY;      % 3 = right
-    design.centerX,     design.centerY + d;  % 4 = bottom
-    design.centerX - d, design.centerY - d;  % 5 = top-left
-    design.centerX + d, design.centerY - d;  % 6 = top-right
+    design.centerX + d, design.centerY - d;  % 3 = top-right
+    design.centerX + d, design.centerY;      % 4 = right
+    design.centerX + d, design.centerY + d   % 5 = bottom-right
+    design.centerX,     design.centerY + d;  % 6 = bottom
     design.centerX - d, design.centerY + d;  % 7 = bottom-left
-    design.centerX + d, design.centerY + d   % 8 = bottom-right
+    design.centerX - d, design.centerY;      % 8 = left
     ];
 % valid position pairs (opposite sides)
 design.fixDotValidPairs = [
-    1 3
-    3 1
-    2 4
-    4 2
-    5 8
-    8 5
-    6 7
-    7 6
+    1 5
+    5 1
+    2 6
+    6 2
+    3 7
+    7 3
+    4 8
+    8 4
     ];
 % frame rectangles around fix dots
 frameSize = design.fixDotFrameSizeInPixels;
@@ -155,7 +155,7 @@ design.frameBaseColor = ptb.grey;
 % fixation cross
 design.fixCrossLineWidth = 2;
 design.fixCrossColor = ptb.black;
-design.conditionColors = [[150, 0, 0]; [0, 0, 135]]; % colors of fix cross used to indicate condition
+design.conditionColors = [[0.85 0.05 0.05]; [0.00 0.45 0.55]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
 design.fixDotTransparency       = 0.3; % 0.5

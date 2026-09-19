@@ -87,21 +87,14 @@ for trial = 1:rows
     end
     % Draw the BR stimuli
     if log.reportCond == reportCondition.report
-        %KbQueueFlush(ptb.Keyboard2);
         draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage);
-        stimOnset = Screen('Flip', ptb.window, taskEnd);
-        stimOffset = stimOnset + design.stimulusPresentationTime;
-        if ptb.useEyetracker
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=report left=%s right=%s',trial, condition,trialStim.leftEyeStim, trialStim.rightEyeStim));
-        end
     else
-        % No-report condition: fixation dots fade in
         draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, design.fixDotTransparency);
-        stimOnset = Screen('Flip', ptb.window, taskEnd);
-        stimOffset = stimOnset + design.stimulusPresentationTime;
-        if ptb.useEyetracker
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim));
-        end
+    end
+    stimOnset = Screen('Flip', ptb.window, taskEnd);
+    stimOffset = stimOnset + design.stimulusPresentationTime;
+    if ptb.useEyetracker
+        Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim));
     end
     % draw response phase (only fixation cross)
     draw.stereo.blanks(ptb,design);

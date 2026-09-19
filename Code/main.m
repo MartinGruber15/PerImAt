@@ -1,4 +1,5 @@
 function main(setUp)
+sca;
 Screen('Preference', 'SkipSyncTests', 1); %TODO
 Screen('Preference', 'Verbosity', 1);  % Only Errors + warnings
 opacity = 0.8;
@@ -16,7 +17,7 @@ addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-log.reportCond = reportCondition.report;
+log.reportCond = reportCondition.noReport;
 offline = false;
 useEyetracker = false;
 dummymode = false; % eye tracker dummy mode
@@ -26,29 +27,22 @@ if offline
     stereomodeSequential = false; % true for shutter glasses at MPI
     design.maxRunNr                 = 5;
 else
-    stereomodeSequential            =false%= true; % true for shutter glasses at MPI
+    stereomodeSequential            = true; % true for shutter glasses at MPI
     design.TR                       = 1.75;  % Control and change
     design.nDummies                 = 5;  % Nr of dummies
     design.maxRunNr                 = 10;
 end
-%log.dual = true;
-%TODO online design setup vs offline setup (e.g. set stereomode variable)
-% Offline
-%if log.dual;log.report=true;end
-%maxrunNr = ...
-%
 
 %% Settings
 ptb = getPTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
 myPaths = getPaths(); % Paths
 design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TODO reinclude (but with correct file)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if offline
-    %cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath); % Gamma correction %#ok<NASGU> 
+    cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);  %#ok<UNRCH> % Gamma correction 
 end
 %% Additional design elements
 design.waitTillStartDuration    = 3;
-
 
 %% Condition Table
 % Condition table
@@ -68,7 +62,7 @@ design = getInstructions(ptb.Keys,design,participantInfo);
 
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["offline experiment", "online experiment","offline training","online training","consent form"]);
+condition = input.chooseOption(["offline experiment", "online experiment","offline training","online training","present fixDot locations","consent form"]);
 log.task = condition;
 if log.reportCond == reportCondition.report
     log.suffix = 'r';
@@ -77,8 +71,9 @@ elseif log.reportCond == reportCondition.noReport
 else 
     log.suffix = 'du';
 end
+
 %% Switch case for different tasks
-%try
+try
     switch condition
         case "offline experiment"
             % Run main experiment
@@ -111,23 +106,22 @@ end
             log.runNr=1;
             ptb.useEyetracker = false;
             [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
-
+        case "present fixDot locations"
+            presentFixDotLocations(ptb, design, myPaths.stimuliLocation);
         case "consent form"
              % Display consent form
             log = consentForm(log, ptb, design);
             save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]),'log');
     end
-%catch ME
-%    if ptb.useEyetracker
-%        eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
-%    end
-%    if ptb.usedatapixx
-%        Datapixx('Close');
-%    end
-%    Screen('CloseAll');
-%    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
-%    rethrow(ME)
-%end
+catch ME
+    if ptb.useEyetracker
+        eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
+    end
+    if ptb.usedatapixx
+        Datapixx('Close');
+    end
+    Screen('CloseAll');
+    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
+    rethrow(ME)
 end
-
-% catch file no report: run, condition, cue, stimL, stimR, dots
+end

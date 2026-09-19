@@ -153,9 +153,9 @@ design.crossesColor = ptb.black;
 design.frameBaseColor = ptb.grey;
 
 % fixation cross
-design.fixCrossLineWidth = 1;
+design.fixCrossLineWidth = 2;
 design.fixCrossColor = ptb.black;
-design.conditionColors = [[255, 0, 0]; [0, 0, 135]]; % colors of fix cross used to indicate condition
+design.conditionColors = [[150, 0, 0]; [0, 0, 135]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
 design.fixDotTransparency       = 0.3; % 0.5

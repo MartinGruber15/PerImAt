@@ -17,7 +17,7 @@ fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.reportCond = reportCondition.report;
-offline = true;
+offline = false;
 useEyetracker = false;
 dummymode = false; % eye tracker dummy mode
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,7 +26,7 @@ if offline
     stereomodeSequential = false; % true for shutter glasses at MPI
     design.maxRunNr                 = 5;
 else
-    stereomodeSequential            = true; % true for shutter glasses at MPI
+    stereomodeSequential            =false%= true; % true for shutter glasses at MPI
     design.TR                       = 1.75;  % Control and change
     design.nDummies                 = 5;  % Nr of dummies
     design.maxRunNr                 = 10;
@@ -64,7 +64,7 @@ participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub
 [design,ptb] = getKeyAssignment(design, ptb, log.sub);
 
 %% Get instructions
-design = getInstructions(design,participantInfo);
+design = getInstructions(ptb.Keys,design,participantInfo);
 
 % Decide what to do
 % experiment or consent form
@@ -102,11 +102,13 @@ end
 
         case "offline training" 
             % Input run number and part of the run
+            log.runNr=1;
             ptb.useEyetracker = false;
             [~, ~, ~, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
 
         case "online training" 
             % Input run number and part of the run
+            log.runNr=1;
             ptb.useEyetracker = false;
             [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
 

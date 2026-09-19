@@ -127,6 +127,9 @@ for trial = 1:rows
     display.stereo.gaussianNoise(ptb,design,maskOnset,design.maskDuration, leftNoise, rightNoise);
     draw.stereo.blanks(ptb, design)
     ITIOnset = Screen('Flip', ptb.window, maskOffset);
+    if ptb.useEyetracker
+        Eyelink('Message', sprintf('ITI_ONSET trial=%d',trial));
+    end
     trialStartTime = ITIOnset + design.ITI;
     
     %% Save stimuli and timing

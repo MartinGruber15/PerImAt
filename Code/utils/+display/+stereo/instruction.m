@@ -1,4 +1,4 @@
-function instruction(ptb, text, waitDuration, autoContinue)
+function instruction(ptb,design, text, waitDuration, autoContinue)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws and displays text onto both buffers of a stereo display.
 % 
@@ -15,10 +15,18 @@ function instruction(ptb, text, waitDuration, autoContinue)
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
 DrawFormattedText (ptb.window, text, 'center', ...
     'center',ptb.FontColor);
+if ptb.usedatapixx
+Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectLeftOn);
+Screen('FillRect', ptb.window, [0, 0, 0], design.blueRectLeftOff);
+end
 % Select right-eye image buffer for drawing:
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
 DrawFormattedText (ptb.window, text, 'center', ...
     'center',ptb.FontColor);
+if ptb.usedatapixx
+    Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectRightOn);
+    Screen('FillRect', ptb.window, [0, 0, 0], design.blueRectRightOff);
+end
 % Tell PTB drawing is finished for this frame:
 Screen('DrawingFinished', ptb.window);
 Screen ('Flip', ptb.window);

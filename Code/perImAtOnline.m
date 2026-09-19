@@ -80,45 +80,37 @@ log.data.ITIOnset             = zeros(rows,1);
 
 
 %% Trial Procedure
-
-% Onset Introduction 1
-display.stereo.instruction(ptb, design.Introduction, design.instructionWaitDuration, false);
-% Onset Introduction 2
-%displayStereoInstruction(ptb, design.OnsetInstructionBrascamp2, design.instructionWaitDuration, false);
-% Onset Introduction 3
-%displayStereoInstruction(ptb, design.OnsetInstructionsBrascamp3, design.instructionWaitDuration, false);
-% Fix on Fixcross
-%displayStereoInstruction(ptb, design.fixOnFixCross, design.instructionWaitDuration, false);
-
-
-%% Test trials
-% Test trial information
-%displayStereoInstruction(ptb, design.OnsetInstructionsOnsetTraining, design.instructionWaitDuration, false);
-% Onset introduction 4 - Reminder key assignment
-%displayStereoInstruction(ptb, design.OnsetInstructionsBrascamp4, design.instructionWaitDuration, false);
-%  Wait till start
-%displayStereoInstruction(ptb, design.waitTillStart, design.waitTillStartDuration, true);
-
-%   Test trials are over
-%displayStereoInstruction(ptb, design.OnsetInstructionsOnsetTrainingEnd, design.instructionWaitDuration, false);
-
-%% Instructions main experiment
-% Onset introduction 4 - Reminder key assignment
-%displayStereoInstruction(ptb, design.OnsetInstructionsBrascamp4, design.instructionWaitDuration, false);
-% Wait till start
-%displayStereoInstruction(ptb, design.waitTillStart, design.waitTillStartDuration, true);
+if log.runNr == 1
+    display.stereo.instruction(ptb,design, design.Introduction, design.instructionWaitDuration, false);
+    display.stereo.legendInstruction(ptb,design, design.cueInstruction, design.instructionWaitDuration, false);
+    display.stereo.instruction(ptb,design, design.taskInstruction, design.instructionWaitDuration, false);
+    switch log.reportCond
+        case reportCondition.report
+            display.stereo.instruction(ptb,design, design.reportInstructionReport,design.instructionWaitDuration, false);
+        case reportCondition.noReport
+            display.stereo.instruction(ptb,design, design.reportInstructionNoReport,design.instructionWaitDuration, false);
+    end
+    display.stereo.instruction(ptb,design, design.questionInstruction, design.instructionWaitDuration, false);
+end
+if log.reportCond == reportCondition.noReport
+    display.stereo.legendInstruction(ptb,design, design.legendReminderInstructionNoReport,design.instructionWaitDuration, false);
+else
+    display.stereo.legendInstruction(ptb,design, design.legendReminderInstructionReport,design.instructionWaitDuration, false);
+end
+display.stereo.instruction(ptb, design,design.fixOnFixCross, design.instructionWaitDuration, false);
 
 %% Main Experiment<
 %only for debug
-%design.nDummies                 = 5;
-%ptb.Keys.trg    = KbName ('w');     ptb.KeyList2(ptb.Keys.trg)   = double(1); % The scanner sends 'w' as USB keyboard input (from keyboard 2)
+design.nDummies                 = 5;
+ptb.Keys.trg    = KbName ('w');     ptb.KeyList2(ptb.Keys.trg)   = double(1); % The scanner sends 'w' as USB keyboard input (from keyboard 2)
 
-log = mri.waitForTrigger(ptb, log,design);
+%log = mri.waitForTrigger(ptb, log,design);
+display.stereo.instruction(ptb,design, design.waitTillStart, design.waitTillStartDuration, true);
 
 log = trialProcedurePerImAtOnline(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 
 %% Run is over
-display.stereo.instruction(ptb, design.RunIsOver, design.instructionWaitDuration, false);
+display.stereo.instruction(ptb, design, design.RunIsOver, design.instructionWaitDuration, false);
 
 %% End of experiment
 %% Save data
@@ -227,7 +219,7 @@ end
 function trialSequence = buildTestTrialSequence(stimLookupTable, conditions)
 % trialSequence: Nx2 numeric array [trialID, conditionIdx]
 % stimLookupTable : table 
-
+repeats = 1;
 conditions = string(conditions(:));
 rows = height(stimLookupTable);    % total rows in table
 % Define how many unique trial IDs per condition

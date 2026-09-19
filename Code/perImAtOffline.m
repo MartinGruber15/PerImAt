@@ -19,9 +19,9 @@ function [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, 
 design.instructionWaitDuration  = 0.5;
 
 design.stimulusPresentationTime = 1.5 - ptb.ifi/2; % 1
-design.taskDuration             = 1 - ptb.ifi/2; % 6
+design.taskDuration             = 6 - ptb.ifi/2; % 6
 design.maxVividTime             = 2 - ptb.ifi/2; % 2
-design.ITI                      = 1 - ptb.ifi/2; % 5
+design.ITI                      = 2 - ptb.ifi/2; % 5
 design.maxReportTime            = 2 - ptb.ifi/2; % 2
 design.cueDuration              = 1 - ptb.ifi/2; % 1 (3 for every first in miniblock)
 
@@ -89,39 +89,33 @@ log.data.ITIOnset             = zeros(rows,1);
 participantInfo = display.stereo.alignFusion(ptb, participantInfo);
 
 %% Trial Procedure
-
-% Onset Introduction 1
-display.stereo.instruction(ptb, design.Introduction, design.instructionWaitDuration, false);
-% Onset Introduction 2
-%displayStereoInstruction(ptb, design.OnsetInstructionBrascamp2, design.instructionWaitDuration, false);
-% Onset Introduction 3
-%displayStereoInstruction(ptb, design.OnsetInstructionsBrascamp3, design.instructionWaitDuration, false);
-% Fix on Fixcross
-%displayStereoInstruction(ptb, design.fixOnFixCross, design.instructionWaitDuration, false);
-
-
-%% Test trials
-% Test trial information
-%displayStereoInstruction(ptb, design.OnsetInstructionsOnsetTraining, design.instructionWaitDuration, false);
-% Onset introduction 4 - Reminder key assignment
-%displayStereoInstruction(ptb, design.OnsetInstructionsBrascamp4, design.instructionWaitDuration, false);
-%  Wait till start
-%displayStereoInstruction(ptb, design.waitTillStart, design.waitTillStartDuration, true);
-
-%   Test trials are over
-%displayStereoInstruction(ptb, design.OnsetInstructionsOnsetTrainingEnd, design.instructionWaitDuration, false);
-
-%% Instructions main experiment
-% Onset introduction 4 - Reminder key assignment
-%displayStereoInstruction(ptb, design.OnsetInstructionsBrascamp4, design.instructionWaitDuration, false);
-% Wait till start
-%displayStereoInstruction(ptb, design.waitTillStart, design.waitTillStartDuration, true);
+if log.runNr == 1
+    display.stereo.instruction(ptb,design, design.Introduction, design.instructionWaitDuration, false);
+    display.stereo.legendInstruction(ptb,design, design.cueInstruction, design.instructionWaitDuration, false);
+    display.stereo.instruction(ptb,design, design.taskInstruction, design.instructionWaitDuration, false);
+    switch log.reportCond
+        case reportCondition.report
+            display.stereo.instruction(ptb,design, design.reportInstructionReport,design.instructionWaitDuration, false);
+        case reportCondition.dual
+            display.stereo.instruction(ptb,design, design.reportInstructionDual,design.instructionWaitDuration, false);
+        case reportCondition.noReport
+            display.stereo.instruction(ptb,design, design.reportInstructionNoReport,design.instructionWaitDuration, false);
+    end
+    display.stereo.instruction(ptb,design, design.questionInstruction, design.instructionWaitDuration, false);
+end
+if log.reportCond == reportCondition.noReport
+    display.stereo.legendInstruction(ptb,design, design.legendReminderInstructionNoReport,design.instructionWaitDuration, false);
+else
+    display.stereo.legendInstruction(ptb,design, design.legendReminderInstructionReport,design.instructionWaitDuration, false);
+end
+display.stereo.instruction(ptb, design,design.fixOnFixCross, design.instructionWaitDuration, false);
+display.stereo.instruction(ptb,design, design.waitTillStart, design.waitTillStartDuration, true);
 
 %% Main Experiment<
 log = trialProcedurePerImAtOffline(log, design, ptb, myPaths, design.stimLookupTable, trialSequence, rows);
 
 %% Run is over
-display.stereo.instruction(ptb, design.RunIsOver, design.instructionWaitDuration, false);
+display.stereo.instruction(ptb, design,design.RunIsOver, design.instructionWaitDuration, false);
 
 %% End of experiment
 %% Save data
@@ -180,7 +174,6 @@ function trialSequence = buildTrialSequence(stimLookupTable, conditions, catchTa
 % conditions : string/cellstr array, e.g. ["imagery","attention","perception","baseline"]
 % repeats : repetitions per trial set (scalar, default 1)
 % seed : numeric RNG seed (optional)
-
 if nargin<6 || isempty(repeats), repeats = 1; end
 if nargin<7, seed = []; end
 if ~isempty(seed); rng(seed);end
@@ -237,7 +230,7 @@ conditions = string(conditions(:));
 rows = height(stimLookupTable);    % total rows in table
 % Define how many unique trial IDs per condition
 nPer = [rows, rows, rows, rows/2];
-
+repeats = 1;
 sets = cell(1,4);
 for c = 1:4
     % normal trials

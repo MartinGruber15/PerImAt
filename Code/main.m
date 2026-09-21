@@ -23,14 +23,14 @@ useEyetracker = false;
 dummymode = false; % eye tracker dummy mode
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if offline
-    stereomodeSequential = false; % true for shutter glasses at MPI
-    design.maxRunNr                 = 5;
-else
+if strcmp(setUp,'MPI')
     stereomodeSequential            = true; % true for shutter glasses at MPI
     design.TR                       = 1.75;  % Control and change
     design.nDummies                 = 5;  % Nr of dummies
     design.maxRunNr                 = 10;
+else
+    stereomodeSequential = false; % true for shutter glasses at MPI
+    design.maxRunNr                 = 5;
 end
 
 %% Settings
@@ -63,7 +63,7 @@ design = getInstructions(ptb.Keys,design,participantInfo);
 
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["offline experiment", "online experiment","offline training","online training","present fixDot locations","consent form"]);
+condition = input.chooseOption(["main experiment","training","present fixDot locations"]);
 log.task = condition;
 if log.reportCond == reportCondition.report
     log.suffix = 'r';
@@ -75,7 +75,7 @@ end
 
 %% Switch case for different tasks
 switch condition
-    case "offline experiment"
+    case "main experiment"
             % Run main experiment
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
             if isequal(log.runNr,[]);return;end
@@ -83,37 +83,24 @@ switch condition
                 eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
                 ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
             end
-            [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full');
-            save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
-        
-    case "online experiment"
-            % Run main experiment
-            log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
-            if isequal(log.runNr,[]);return;end
-            if ptb.useEyetracker
-                eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
-                ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
+            if offline
+                [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full');
+            else
+                [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full');
             end
-            [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full');
             save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
-    case "offline training" 
+    case "training" 
             % Input run number and part of the run
             log.runNr=1;
             ptb.useEyetracker = false;
-            [~, ~, ~, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
-
-    case "online training" 
-            % Input run number and part of the run
-            log.runNr=1;
-            ptb.useEyetracker = false;
-            [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
+            if offline
+                [~, ~, ~, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
+            else
+                [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<UNRCH>
+            end
     case "present fixDot locations"
             presentFixDotLocations(ptb, design, myPaths.stimuliLocation);
-    case "consent form"
-             % Display consent form
-            log = consentForm(log, ptb, design);
-            save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]),'log');
 end    
 end
 

@@ -149,12 +149,11 @@ if (log.reportCond == reportCondition.noReport) || (log.reportCond == reportCond
     log.data.fixDotCoordHouse = cellfun(@(x) strjoin(string(x), ','),log.data.fixDotCoordHouse,'UniformOutput', false);
     log.data.fixDotCoordFace = cellfun(@(x) strjoin(string(x), ','),log.data.fixDotCoordFace,'UniformOutput', false);
 end
-
-log.data.rating(find(log.data.vividResponse==(ptb.Keys.left))) = {'1'};
-log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'2'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.accept))) = {'1'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.left))) = {'2'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.right))) = {'3'};
-log.data.rating(find(log.data.vividResponse==(ptb.Keys.down))) = {'4'};
-log.data.rating(find(log.data.vividResponse==(ptb.Keys.accept))) = {'5'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'4'};
+log.data.rating(find(log.data.vividResponse==(ptb.Keys.down))) = {'5'};
 
 % save the data to csv file
 responseTable = struct2table(log.data);

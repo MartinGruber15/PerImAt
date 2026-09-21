@@ -71,10 +71,10 @@ switch ptb.SetUp
     case 'CIN-experimentroom'
         % subject keys
         ptb.Keys.left   = KbName('4');  ptb.KeyList2(ptb.Keys.left)  = double(1);
-        ptb.Keys.right  = KbName('6');  ptb.KeyList2(ptb.Keys.right) = double(1);
-        ptb.Keys.up     = KbName('8');  ptb.KeyList2(ptb.Keys.left)  = double(1);
-        ptb.Keys.down   = KbName('2');  ptb.KeyList2(ptb.Keys.right) = double(1);
-        ptb.Keys.accept = KbName('5');  ptb.KeyList2(ptb.Keys.accept)= double(1);
+        ptb.Keys.right  = KbName('8');  ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.up     = KbName('9');  ptb.KeyList2(ptb.Keys.left)  = double(1);
+        ptb.Keys.down   = KbName('+');  ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.accept = KbName('0');  ptb.KeyList2(ptb.Keys.accept)= double(1);
         ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
 
         % Get Keyboard indices

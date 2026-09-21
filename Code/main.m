@@ -12,7 +12,7 @@ PsychDebugWindowConfiguration([], opacity)
 
 %% Choose the experiment setup
 % CIN-personal, CIN-experimentroom, MPI
-if nargin < 1 || isempty(setUp); setUp = 'CIN-personal';end
+if nargin < 1 || isempty(setUp); setUp = 'personal';end
 addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 

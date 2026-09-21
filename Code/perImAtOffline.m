@@ -53,7 +53,6 @@ else
 end
 
 rows=height(trialSequence);
-rows = 1;
 
 %% Empty cell arrays to save trial information
 log.data.condition              = cell(rows,1);

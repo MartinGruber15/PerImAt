@@ -44,12 +44,12 @@ else
 end
 
 switch ptb.SetUp
-    case 'CIN-personal'
+    case 'personal'
         % subject keys
         ptb.Keys.left   = KbName('LeftArrow');  ptb.KeyList2(ptb.Keys.left)  = double(1);
         ptb.Keys.right  = KbName('RightArrow'); ptb.KeyList2(ptb.Keys.right) = double(1);
-        ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.left)  = double(1);
-        ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.up)  = double(1);
+        ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.down) = double(1);
         ptb.Keys.accept = KbName('Space');      ptb.KeyList2(ptb.Keys.accept)= double(1);
         ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
 
@@ -67,13 +67,36 @@ switch ptb.SetUp
         ptb.Keyboard2 = keyboardIndices(1); % (change back to 1 if this doesnt work)
         fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
         fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
+    case 'CIN-personal'
+        % subject keys
+        ptb.Keys.left   = KbName('LeftArrow');  ptb.KeyList2(ptb.Keys.left)  = double(1);
+        ptb.Keys.right  = KbName('RightArrow'); ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.up)  = double(1);
+        ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.down) = double(1);
+        ptb.Keys.accept = KbName('Space');      ptb.KeyList2(ptb.Keys.accept)= double(1);
+        ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
+
+        % Get Keyboard indices
+        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Logitech Keyboard');
+        % for some reason GetKeyboardIndices returns two indices
+        % for the Keyboard. The physical device might offer several
+        % interfaces to interact with it
+        % It looks like the first index is the one working
+        % However, apparently on tuxedo os and windows it looks like 
+        % assigning keyboardIndices(1)to both ptb keyboards does not work.
+        % It helps in this case to allow them to use different interfaces
+        % provided by the same device
+        ptb.Keyboard1 = keyboardIndices(1);
+        ptb.Keyboard2 = keyboardIndices(1); % (change back to 1 if this doesnt work)
+        fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
+        fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
 
     case 'CIN-experimentroom'
         % subject keys
         ptb.Keys.left   = KbName('4');  ptb.KeyList2(ptb.Keys.left)  = double(1);
         ptb.Keys.right  = KbName('8');  ptb.KeyList2(ptb.Keys.right) = double(1);
-        ptb.Keys.up     = KbName('9');  ptb.KeyList2(ptb.Keys.left)  = double(1);
-        ptb.Keys.down   = KbName('+');  ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.up     = KbName('9');  ptb.KeyList2(ptb.Keys.up)  = double(1);
+        ptb.Keys.down   = KbName('+');  ptb.KeyList2(ptb.Keys.down) = double(1);
         ptb.Keys.accept = KbName('0');  ptb.KeyList2(ptb.Keys.accept)= double(1);
         ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
 
@@ -98,8 +121,8 @@ switch ptb.SetUp
         ptb.Keys.trg    = KbName ('w');     ptb.KeyList2(ptb.Keys.trg)   = double(1); % The scanner sends 'w' as USB keyboard input (from keyboard 2)
         ptb.Keys.left   = KbName('4$');  ptb.KeyList2(ptb.Keys.left)  = double(1);
         ptb.Keys.right  = KbName('3#'); ptb.KeyList2(ptb.Keys.right) = double(1);
-        ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.left)  = double(1);
-        ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.right) = double(1);
+        ptb.Keys.up     = KbName('UpArrow');    ptb.KeyList2(ptb.Keys.up)  = double(1);
+        ptb.Keys.down   = KbName('DownArrow');  ptb.KeyList2(ptb.Keys.down) = double(1);
         ptb.Keys.accept = KbName('5%');     ptb.KeyList2(ptb.Keys.accept)= double(1);
         ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
 
@@ -183,6 +206,13 @@ ptb.FontColor = ptb.black;
 ptb.BackgroundColor = ptb.grey; %TODO 
 
 switch ptb.SetUp
+    case 'personal'
+        [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [0 0 1920 1200], [],[],ptb.stereomode); 
+        % Real world variable
+        ptb.DistToMonitor   = 450;  % Distance to monitor in mm (measured by hand) - REMEASURE
+        ptb.widthMonitor    = 360;  % monitor width measured by hand - REMEASURE
+        ptb.heightMonitor   = 210;  % monitor height measured by hand - REMEASURE
+        ptb.lineWidthInPix  = 4;    % line width in pixels for fixation cross
     case 'CIN-personal'
         [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [0 0 1920 1200], [],[],ptb.stereomode); 
         % Real world variable

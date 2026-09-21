@@ -17,7 +17,7 @@ design.fusionMaskInDegrees      = 8;        % surrounding fusion-aid frame
 design.fixCrossInDegrees        = 0.2;      % Fixation cross in degrees
 design.fixDotSizeInDegrees      = 0.3;      % Fixation dots for no-report in degrees
 design.fixDotFrameSizeInDegrees = 0.35;%35? % Frame around fixation dot
-design.legendPictogramInDegrees = 0.5;      % key assignment legend pictograms
+design.legendPictogramInDegrees = 0.8;      % key assignment legend pictograms
 
 %% Convert visual degrees to pixels
 % Stimulus size
@@ -110,10 +110,10 @@ for i = 1:8
 end
 
 % Cue text position
-design.cueY                 = design.centerY - design.stimSizeInPixelsY/6; % cue position on screen
+design.cueY                 = design.centerY - round(0.45 * ptb.PixPerDegHeight); % cue position on screen
 % Cue legend layout
-design.legendYSpacing       = round(0.5 * ptb.PixPerDegHeight);
-design.legendCrossSize      = round(0.2 * ptb.PixPerDegWidth);
+design.legendYSpacing       = round(0.8 * ptb.PixPerDegHeight);
+design.legendCrossSize      = round(0.4 * ptb.PixPerDegWidth);
 design.legendArrowLength    = round(0.3 * ptb.PixPerDegWidth);
 design.legendGap            = round(0.08 * ptb.PixPerDegWidth);
 legendWidth                 = design.legendCrossSize + design.legendGap + ... % Total width: cross + gap + arrow + gap + pictogram
@@ -125,7 +125,7 @@ design.legendCrossCenterX   = design.legendX + design.legendCrossSize/2;
 design.legendArrowX         = design.legendX + design.legendCrossSize + design.legendGap;
 design.legendPictogramX     = design.legendArrowX + design.legendArrowLength + design.legendGap;
 % Cue legend y position(s)
-design.legendY1             = design.centerY + design.stimSizeInPixelsY/10;
+design.legendY1             = design.centerY + round(0.2 * ptb.PixPerDegHeight);
 design.legendY2             = design.legendY1 + design.legendYSpacing;
 % Pictogram rectangles on screen
 design.housePictogramRect = [ ...

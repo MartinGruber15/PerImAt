@@ -115,7 +115,7 @@ display.stereo.instruction(ptb, design, design.RunIsOver, design.instructionWait
 %% End of experiment
 %% Save data
 if strcmp(modus,'training'); prefix='_train_';else;prefix='';end
-fileName = ['sub-' log.sub '_online' prefix sprintf('_run-%02d',log.runNr) '_' log.suffix];
+fileName = ['sub-' log.sub '_online' prefix sprintf('_run-%02d',log.runNr) '_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
 % Convert button presses from key ids to the perceived (house,face,mixed)
 if log.reportCond == reportCondition.report
     response = log.data.response;

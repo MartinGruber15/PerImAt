@@ -18,7 +18,7 @@ fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 log.reportCond = reportCondition.noReport;
-offline = false;
+offline = true;
 useEyetracker = false;
 dummymode = false; % eye tracker dummy mode
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,9 +37,10 @@ end
 ptb = getPTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
 myPaths = getPaths(); % Paths
 design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
+cleanupObj = onCleanup(@() closeAll(ptb,log,myPaths)); % make sure every connection and screen get closed in case of an error
 
 if offline
-    cleanupObj = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);  %#ok<UNRCH> % Gamma correction 
+    gammaCleanup = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);  %#ok<NASGU> % Gamma correction 
 end
 %% Additional design elements
 design.waitTillStartDuration    = 3;
@@ -73,55 +74,83 @@ else
 end
 
 %% Switch case for different tasks
-try
-    switch condition
-        case "offline experiment"
+switch condition
+    case "offline experiment"
             % Run main experiment
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
+            if isequal(log.runNr,[]);return;end
             if ptb.useEyetracker
                 eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
                 ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
             end
             [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full');
-            %save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
+            save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
         
-        case "online experiment"
+    case "online experiment"
             % Run main experiment
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
+            if isequal(log.runNr,[]);return;end
             if ptb.useEyetracker
                 eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
                 ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
             end
             [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full');
-            %save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
+            save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
-        case "offline training" 
+    case "offline training" 
             % Input run number and part of the run
             log.runNr=1;
             ptb.useEyetracker = false;
             [~, ~, ~, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
 
-        case "online training" 
+    case "online training" 
             % Input run number and part of the run
             log.runNr=1;
             ptb.useEyetracker = false;
             [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
-        case "present fixDot locations"
+    case "present fixDot locations"
             presentFixDotLocations(ptb, design, myPaths.stimuliLocation);
-        case "consent form"
+    case "consent form"
              % Display consent form
             log = consentForm(log, ptb, design);
             save(fullfile(myPaths.subjectDirectory, ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]),'log');
-    end
-catch ME
-    if ptb.useEyetracker
+end    
+end
+
+function closeAll(ptb, log, myPaths)
+% Eye tracker
+if isfield(ptb, 'useEyetracker') && ptb.useEyetracker && isfield(myPaths,'subjectDirectory')
+    try
         eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
+    catch ME
+        warning('Could not close EyeLink properly: %s', ME.message);
     end
-    if ptb.usedatapixx
+end
+
+% DataPixx
+if isfield(ptb, 'usedatapixx') && ptb.usedatapixx
+    try
         Datapixx('Close');
+    catch ME
+        warning('Could not close DataPixx: %s', ME.message);
     end
+end
+
+% Psychtoolbox
+try
     Screen('CloseAll');
-    save(fullfile(myPaths.subjectDirectory, ['log_' char(datetime)]),'log');
-    rethrow(ME)
+catch ME
+    warning('Could not close Psychtoolbox: %s', ME.message);
+end
+
+% Save log LAST
+if isfield(myPaths,'subjectDirectory')
+try
+    save(fullfile(myPaths.subjectDirectory, ...
+        ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]), ...
+        'log');
+catch ME
+    warning('Could not save log: %s', ME.message);
+end
 end
 end

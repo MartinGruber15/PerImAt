@@ -5,7 +5,7 @@ function closeEyetracker(ptb, subjectDirectory)
 %   ptb              - struct containing Psychtoolbox parameters
 %   subjectDirectory - directory in which to save the EDF file
 
-if ~ptb.useEyetracker
+if ~ptb.useEyetracker || ~ptb.eyelink.initialized
     return;
 end
 

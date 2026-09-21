@@ -93,5 +93,6 @@ Eyelink('Message', 'SYNCTIME');
 Screen('Close', ptb.et.window);
 unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120');
 
+ptb.eyelink.initialized = true;
 fprintf('EyeLink recording started: %s.edf\n', ptb.eyelink.edfFile);
 end

@@ -56,7 +56,7 @@ myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', log.sub]);
 participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub);
 
 %% Set key bindings
-[design,ptb] = getKeyAssignment(design, ptb, log.sub);
+[design,ptb,log] = getKeyAssignment(design, ptb, log,offline);
 
 %% Get instructions
 design = getInstructions(ptb.Keys,design,participantInfo);
@@ -65,18 +65,12 @@ design = getInstructions(ptb.Keys,design,participantInfo);
 % experiment or consent form
 condition = input.chooseOption(["main experiment","training","present fixDot locations"]);
 log.task = condition;
-if log.reportCond == reportCondition.report
-    log.suffix = 'r';
-elseif log.reportCond == reportCondition.noReport
-    log.suffix = 'nr';
-else 
-    log.suffix = 'du';
-end
 
 %% Switch case for different tasks
 switch condition
     case "main experiment"
             % Run main experiment
+            [log.suffix,log.block] = input.autoChooseNextBlock(design.maxRunNr, myPaths.subjectDirectory, design.reportOrder);
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
             if isequal(log.runNr,[]);return;end
             if offline

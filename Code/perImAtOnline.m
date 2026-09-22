@@ -36,10 +36,11 @@ switch log.reportCond
     case reportCondition.noReport
         catchFilename = "catchTrialOrderNR.csv";
 end
+design.catchDistr = [6; 6; 6; 2];
 isReport = log.reportCond == reportCondition.report;
 catchFile = fullfile(myPaths.subjectDirectory, catchFilename);
 if ~isfile(catchFile)
-    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr, catchFilename, isReport);
+    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr,design.catchDistr, catchFilename, isReport);
 end
 catchTable = readtable(catchFile);
 conditions = ["imagery", "attention", "perception", "baseline"];
@@ -98,6 +99,12 @@ else
     display.stereo.legendInstruction(ptb,design, design.legendReminderInstructionReport,design.instructionWaitDuration, false);
 end
 display.stereo.instruction(ptb, design,design.fixOnFixCross, design.instructionWaitDuration, false);
+
+%% Calibrate Eye Tracker
+if ptb.useEyetracker
+    eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;eyeRun.offline=0;
+    ptb = eyetracking.startEyetracker(ptb, participantInfo,eyeRun, dummymode);
+end
 
 %% Main Experiment<
 %only for debug

@@ -17,7 +17,7 @@ addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-log.reportCond = reportCondition.noReport;
+log.reportCond = reportCondition.report;
 offline = true;
 useEyetracker = false;
 dummymode = false; % eye tracker dummy mode
@@ -79,10 +79,6 @@ switch condition
             % Run main experiment
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
             if isequal(log.runNr,[]);return;end
-            if ptb.useEyetracker
-                eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;
-                ptb = eyetracking.startEyetracker(ptb, eyeRun, dummymode);
-            end
             if offline
                 [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full');
             else

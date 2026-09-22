@@ -2,9 +2,21 @@ function legendInstruction(ptb, design, text, waitDuration, autoContinue)
 
 switchOrder = rand < 0.5;
 
+% Determine text height
+lines = regexp(text, '\\n', 'split');
+nLines = numel(lines);
+% Height of one line
+textBounds = Screen('TextBounds', ptb.window, 'Ag');
+lineHeight = textBounds(4) - textBounds(2);
+% Total cue height
+textHeight = (nLines-1) * lineHeight;
+
+% cueY is the LOWER boundary of the cue
+cueY1 = design.cueY - textHeight;
+
 % Left eye
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
-DrawFormattedText(ptb.window, text, 'center', design.cueY, ptb.FontColor);
+DrawFormattedText(ptb.window, text, 'center', cueY1, ptb.FontColor);
 
 % Legend
 drawLegend(ptb, design, switchOrder);
@@ -15,7 +27,7 @@ end
 
 % Right eye
 Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
-DrawFormattedText(ptb.window, text, 'center', design.cueY, ptb.FontColor);
+DrawFormattedText(ptb.window, text, 'center', cueY1, ptb.FontColor);
 % Legend
 drawLegend(ptb, design, switchOrder)
 if ptb.usedatapixx

@@ -62,23 +62,15 @@ function [participantInfo] = alignFusion(ptb, participantInfo)
         [KeyIsDown, ~, keyCode, ~] = KbCheck;
 
         if KeyIsDown
-            if find(keyCode)==ptb.Keys.left
+            if keyCode(ptb.Keys.left)
                 horizontalOffset = horizontalOffset-change;
                 disp('=>pressed LEFT')
                 updateStereo = true;
-            elseif find(keyCode)==ptb.Keys.right
+            elseif keyCode(ptb.Keys.right)
                 horizontalOffset = horizontalOffset+change;
                 disp('=>pressed RIGHT')
                 updateStereo = true;
-            elseif find(keyCode)==ptb.Keys.up
-                verticalOffset = verticalOffset+change;
-                disp('=>pressed UP')
-                updateStereo = true;
-            elseif find(keyCode)==ptb.Keys.down
-                verticalOffset = verticalOffset-change;
-                disp('=>pressed DOWN')
-                updateStereo = true;
-            elseif find(keyCode)==ptb.Keys.accept
+            elseif keyCode(ptb.Keys.accept)
                 disp('=>pressed SPACE')
                 break
             else

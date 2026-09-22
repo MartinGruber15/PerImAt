@@ -1,17 +1,21 @@
-function catchTable = createCatchTrialOrder(outputDirectory, nRuns, outputname, report, seed)
+function catchTable = createCatchTrialOrder(outputDirectory, nRuns, nTrials,outputname, report, seed)
 
 if nargin < 2 || isempty(nRuns), nRuns = 10; end
-if nargin < 3 || isempty(outputname), outputname = "catchTrialOrder.csv"; end
-if nargin < 4 || isempty(report), report = false; end
-if nargin < 5, seed = []; end
+if nargin < 3 || isempty(nTrials), nTrials = [6; 6; 6; 2]; end
+if nargin < 4 || isempty(outputname), outputname = "catchTrialOrder.csv"; end
+if nargin < 5 || isempty(report), report = false; end
+if nargin < 6, seed = []; end
 if ~isempty(seed), rng(seed); end
 
 conditions = ["imagery"; "perception"; "attention"; "baseline"];
 cues      = ["face"; "house"];
 
 % Number of trials contributed by each condition
-nTrials = [6; 6; 6; 2];
-
+nTrials = nTrials(:);
+if sum(nTrials) ~= 2 * nRuns
+    error('The sum of nTrials (%d) must equal 2 * nRuns (%d).', ...
+        sum(nTrials), 2 * nRuns);
+end
 % Create the condition pool
 conditionPool = repelem(conditions, nTrials);
 

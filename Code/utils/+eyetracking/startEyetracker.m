@@ -5,17 +5,22 @@ function ptb = startEyetracker(ptb, eyeRun, dummymode)
 if ~ptb.eyelink.track
     return;
 end
+if ~eyeRun.offline
+    % EyeLink calibration requires 60 Hz on this system.
+    unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 60');
+    % Temporary window for EyeLink calibration.
+    [ptb.et.window, ptb.et.windowRect] = PsychImaging('OpenWindow', ...
+        ptb.screenNumber, ptb.BackgroundColor, [], [], [], 1); % this already works on the scanner; never change a running system.
+    window = ptb.et.window;
+    windowRect = ptb.et.windowRect;
+else
+    window = ptb.window;
+    windowRect = ptb.windowRect;
+end
 
-% EyeLink calibration requires 60 Hz on this system.
-unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 60');
-
-% Temporary window for EyeLink calibration.
-[ptb.et.window, ptb.et.windowRect] = PsychImaging('OpenWindow', ...
-    ptb.screenNumber, ptb.BackgroundColor, [], [], [], 1);
-
-el = EyelinkInitDefaults(ptb.et.window);
+el = EyelinkInitDefaults(window);
 if ~EyelinkInit(dummymode, 1)
-    Screen('Close', ptb.et.window);
+    Screen('Close', window);
     error('Eyelink initialization failed.');
 end
 if dummymode
@@ -40,8 +45,8 @@ Eyelink('command', 'calibration_area_proportion = 0.25 0.25');
 Eyelink('command', 'validation_area_proportion = 0.25 0.25');
 
 % Setting the proper recording resolution, and calibration type
-Eyelink('command', 'screen_pixel_coords = %ld %ld %ld %ld', 0, 0, ptb.et.windowRect(3)-1, ptb.et.windowRect(4)-1);
-Eyelink('command', 'DISPLAY_COORDS %ld %ld %ld %ld', 0, 0, ptb.et.windowRect(3)-1, ptb.et.windowRect(4)-1);
+Eyelink('command', 'screen_pixel_coords = %ld %ld %ld %ld', 0, 0, windowRect(3)-1, windowRect(4)-1);
+Eyelink('command', 'DISPLAY_COORDS %ld %ld %ld %ld', 0, 0, windowRect(3)-1, windowRect(4)-1);
 Eyelink('command', 'calibration_type = HV13');
 
 Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE');
@@ -58,7 +63,7 @@ ptb.eyelink.edfFile = sprintf('s%02dr%02d%s', eyeRun.subjectNr, eyeRun.runNr, ey
 
 status = Eyelink('OpenFile', [ptb.eyelink.edfFile '.edf']);
 if status ~= 0
-    Screen('Close', ptb.et.window);
+    Screen('Close', window);
     error('Could not open EyeLink file.');
 end
 
@@ -71,9 +76,6 @@ if KeyIsDown
     end
 end
 
-if ptb.stereomode == 4
-    Screen('SelectStereoDrawBuffer', ptb.et.window, 0);
-end
 EyelinkDoTrackerSetup(el);
 
 % Stop experiment if 'q' (quit) is being pressed
@@ -90,8 +92,10 @@ EyelinkDoDriftCorrection(el);
 Eyelink('StartRecording');
 Eyelink('Message', 'SYNCTIME');
 
-Screen('Close', ptb.et.window);
-unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120');
+if ~eyeRun.offline
+    Screen('Close', window);
+    unix('xrandr --screen 1 --output DP-0 --mode 1920x1080 --rate 120');
+end
 
 ptb.eyelink.initialized = true;
 fprintf('EyeLink recording started: %s.edf\n', ptb.eyelink.edfFile);

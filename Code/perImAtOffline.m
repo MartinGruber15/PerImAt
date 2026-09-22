@@ -39,10 +39,11 @@ switch log.reportCond
     case reportCondition.noReport
         catchFilename = "catchTrialOrderNR.csv";
 end
+design.catchDistr = [3; 3; 3; 1];
 isReport = log.reportCond == reportCondition.report; % no-report catch trials for no-report and dual
 catchFile = fullfile(myPaths.subjectDirectory, catchFilename);
 if ~isfile(catchFile)
-    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr, catchFilename, isReport);
+    createCatchTrialOrder(myPaths.subjectDirectory, design.maxRunNr, design.catchDistr,catchFilename, isReport);
 end
 catchTable = readtable(catchFile);
 conditions = ["imagery", "attention", "perception", "baseline"];
@@ -87,6 +88,10 @@ log.data.ITIOnset             = zeros(rows,1);
 %% Fusion alignment
 % Before every run
 participantInfo = display.stereo.alignFusion(ptb, participantInfo);
+if ptb.useEyetracker
+    eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;eyeRun.offline=true;
+    ptb = eyetracking.startEyetracker(ptb, participantInfo,eyeRun, dummymode);
+end
 
 %% Trial Procedure
 if log.runNr == 1

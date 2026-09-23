@@ -38,7 +38,7 @@ ptb = getPTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables re
 myPaths = getPaths(); % Paths
 design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
 cleanupObj = onCleanup(@() closeAll(ptb,log,myPaths)); % make sure every connection and screen get closed in case of an error
-
+ptb.dummymode = dummymode;
 if offline
     gammaCleanup = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);  %#ok<NASGU> % Gamma correction 
 end
@@ -70,7 +70,7 @@ log.task = condition;
 switch condition
     case "main experiment"
             % Run main experiment
-            [log.suffix,log.block] = input.autoChooseNextBlock(design.maxRunNr, myPaths.subjectDirectory, design.reportOrder);
+            [log.suffix,log.reportCond] = input.autoChooseNextBlock(design.maxRunNr, myPaths.subjectDirectory, design.reportOrder);
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
             if isequal(log.runNr,[]);return;end
             if offline

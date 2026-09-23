@@ -103,7 +103,7 @@ display.stereo.instruction(ptb, design,design.fixOnFixCross, design.instructionW
 %% Calibrate Eye Tracker
 if ptb.useEyetracker
     eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;eyeRun.offline=0;
-    ptb = eyetracking.startEyetracker(ptb, participantInfo,eyeRun, dummymode);
+    ptb = eyetracking.startEyetracker(ptb,eyeRun, ptb.dummymode);
 end
 
 %% Main Experiment<

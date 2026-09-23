@@ -88,9 +88,10 @@ log.data.ITIOnset             = zeros(rows,1);
 %% Fusion alignment
 % Before every run
 participantInfo = display.stereo.alignFusion(ptb, participantInfo);
+design.horizontalOffset = participantInfo.horizontalOffset;
 if ptb.useEyetracker
     eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;eyeRun.offline=true;
-    ptb = eyetracking.startEyetracker(ptb, participantInfo,eyeRun, dummymode);
+    ptb = eyetracking.startEyetracker(ptb,eyeRun, ptb.dummymode);
 end
 
 %% Trial Procedure

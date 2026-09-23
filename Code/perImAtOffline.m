@@ -89,6 +89,7 @@ log.data.ITIOnset             = zeros(rows,1);
 % Before every run
 participantInfo = display.stereo.alignFusion(ptb, participantInfo);
 design.horizontalOffset = participantInfo.horizontalOffset;
+design.horizontalOffsetInPix = ptb.screenXpixels * design.horizontalOffset;
 if ptb.useEyetracker
     eyeRun.subjectNr = int32(str2double(log.sub));eyeRun.runNr=log.runNr;eyeRun.suffix=log.suffix;eyeRun.offline=true;
     ptb = eyetracking.startEyetracker(ptb,eyeRun, ptb.dummymode);

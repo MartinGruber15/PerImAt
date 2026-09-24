@@ -24,7 +24,7 @@ function log = savedata(log, ptb, design, participantInfo, myPaths)
         end
     end
     % filename dependent on task [objects|gratings] and run [1-6]
-    fileName = ['sub-' log.sub '_task-' log.task sprintf('_run-%02d',log.runNr)];
+    fileName = ['sub-' log.sub '_training'];
     
     % get the file
     if design.useET 
@@ -73,7 +73,7 @@ function log = savedata(log, ptb, design, participantInfo, myPaths)
             unixStr=['mv ' log.edfFile ' ' fullfile(myPaths.subjectDirectory, [fileName '.edf'])];
             unix(unixStr);
         end
-        [resultsTable, success] = formatResponses(log,ptb);
+        [resultsTable, success] = save_utils.formatResponses(log,ptb);
         if success
             % save table as csv file
             writetable(resultsTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']));

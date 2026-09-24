@@ -81,7 +81,7 @@ log.data.ITIOnset             = zeros(rows,1);
 
 
 %% Trial Procedure
-if log.runNr == 1
+if strcmp(modus,"training")
     display.stereo.instruction(ptb,design, design.Introduction, design.instructionWaitDuration, false);
     display.stereo.legendInstruction(ptb,design, design.cueInstruction, design.instructionWaitDuration, false);
     display.stereo.instruction(ptb,design, design.taskInstruction, design.instructionWaitDuration, false);

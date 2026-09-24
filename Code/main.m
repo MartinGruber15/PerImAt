@@ -68,7 +68,7 @@ participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub
 design = getInstructions(ptb.Keys,design,participantInfo);
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training"]);
+condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training"]);
 log.task = condition;
 
 %% Switch case for different tasks
@@ -99,6 +99,8 @@ switch condition
             presentFixDotLocations(ptb, design, myPaths.stimuliLocation);
     case "key binding training"
         keyBindingTraining(ptb, design);
+    case "BR training"
+        binocularRivalryTraining(log,ptb,design,myPaths);
 end    
 end
 

@@ -121,8 +121,11 @@ display.stereo.instruction(ptb, design, design.RunIsOver, design.instructionWait
 
 %% End of experiment
 %% Save data
-if strcmp(modus,'training'); prefix='_train_';else;prefix='';end
-fileName = ['sub-' log.sub '_online' prefix sprintf('_run-%02d',log.runNr) '_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
+if strcmp(modus,'training')
+    fileName = ['sub-' log.sub '_train_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
+else
+    fileName = ['sub-' log.sub sprintf('_run-%02d',log.runNr) '_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
+end
 % Convert button presses from key ids to the perceived (house,face,mixed)
 if log.reportCond == reportCondition.report
     response = log.data.response;
@@ -152,17 +155,15 @@ end
 log.data.triggerTimes = cellfun(@(x) strjoin(string(x), ','),log.data.triggerTimes,'UniformOutput', false);
 
 % save the data to csv file
-if strcmp(modus,'full')
-    responseTable = struct2table(log.data);
-    writetable(responseTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']), 'Delimiter',';');
-end
+responseTable = struct2table(struct(log.data));
+writetable(responseTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']), 'Delimiter',';');
 
 %% close open connections and screen
-eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
-if ptb.usedatapixx
-    Datapixx('Close');
-end
-Screen('CloseAll');
+%eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
+%if ptb.usedatapixx
+%    Datapixx('Close');
+%end
+%Screen('CloseAll');
 %ListenChar(1); % enable input to matlab windows
 % Experiment ended without errors
 log.end = 'Success';

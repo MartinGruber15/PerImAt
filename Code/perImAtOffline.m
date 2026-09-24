@@ -54,7 +54,6 @@ else
 end
 
 rows=height(trialSequence);
-
 %% Empty cell arrays to save trial information
 log.data.condition              = cell(rows,1);
 log.data.leftEye                = cell(rows,1);
@@ -126,8 +125,11 @@ display.stereo.instruction(ptb, design,design.RunIsOver, design.instructionWaitD
 
 %% End of experiment
 %% Save data
-if strcmp(modus,'training'); prefix='_train_';else;prefix='';end
-fileName = ['sub-' log.sub prefix sprintf('_run-%02d',log.runNr) '_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
+if strcmp(modus,'training')
+    fileName = ['sub-' log.sub '_train_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
+else
+    fileName = ['sub-' log.sub sprintf('_run-%02d',log.runNr) '_' log.suffix '_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))];
+end
 
 % Convert button presses from key ids to the perceived (house,face,mixed)
 if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
@@ -162,13 +164,13 @@ log.data.rating(find(log.data.vividResponse==(ptb.Keys.up))) = {'4'};
 log.data.rating(find(log.data.vividResponse==(ptb.Keys.down))) = {'5'};
 
 % save the data to csv file
-responseTable = struct2table(log.data);
+responseTable = struct2table(struct(log.data));
 writetable(responseTable, fullfile(myPaths.subjectDirectory, [fileName '.csv']), 'Delimiter',';');
 
 %% close open connections and screen
-eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
+%eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
 
-Screen('CloseAll');
+%Screen('CloseAll');
 %ListenChar(1); % enable input to matlab windows
 % Experiment ended without errors
 log.end = 'Success';
@@ -241,7 +243,7 @@ sets = cell(1,4);
 for c = 1:4
     % normal trials
     ids = (1:nPer(c));                     % trial IDs for imagery/attention/perception
-    ids = repmat(ids, 2, repeats);       % repeat each id
+    ids = repmat(ids, 1, repeats);       % repeat each id
     ids = ids(randperm(numel(ids)));    % randomize order within block
     condNames = repmat(conditions(c), numel(ids), 1);
     block = table(ids(:), condNames, 'VariableNames', {'trialID','condition'});
@@ -251,4 +253,5 @@ end
 % Randomize order of the four blocks and concatenate
 order = randperm(4);
 trialSequence = vertcat(sets{order});
+disp(trialSequence)
 end

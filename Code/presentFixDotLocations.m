@@ -14,7 +14,7 @@ end
 for imgIdx = 1:2
     image = images{imgIdx};
     % Present the image at every valid fixation-dot position
-    for i = 1:length(design.fixDotValidPairs)
+    for i = 1:size(design.fixDotPositions, 1)
         selectedPair = [i i];
         draw.stereo.imagesNoReport(ptb,design,image,image,selectedPair,design.fixDotTransparency);
         % Keep this presentation for 3 seconds

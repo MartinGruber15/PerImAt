@@ -1,4 +1,4 @@
-function ptb = getPTBSettings(SetUp, useEyetracker, stereomodeSequential)
+function ptb = getPTBSettings(ptb,SetUp, useEyetracker, stereomodeSequential)
 %PTBSettings: reads out and sets values from/for Psychtoolbox and the
 %experiment
 %   input:

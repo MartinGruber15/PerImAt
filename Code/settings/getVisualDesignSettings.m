@@ -68,37 +68,71 @@ design.fixCrossCoords = [
 
 % Fixation dot positions and coordinates for no-report BR
 % Distance of fixation dots from the center
-design.fixDotDistanceInPixels = min(design.stimSizeInPixelsX / 3,design.stimSizeInPixelsY / 3) / 2;
+design.fixDotDistanceInPixels = min(design.stimSizeInPixelsX / 2.3,design.stimSizeInPixelsY / 2.3) / 2; % 3 3 2
 d = design.fixDotDistanceInPixels;
 % screen coordinates of the 8 possible positions
 % 1 2 3
 % 8 + 4
 % 7 6 5
+%design.fixDotPositions = [
+%    design.centerX - d, design.centerY - d;  % 1 = top-left
+%    design.centerX,     design.centerY - d;  % 2 = top
+%    design.centerX + d, design.centerY - d;  % 3 = top-right
+%    design.centerX + d, design.centerY;      % 4 = right
+%    design.centerX + d, design.centerY + d   % 5 = bottom-right
+%    design.centerX,     design.centerY + d;  % 6 = bottom
+%    design.centerX - d, design.centerY + d;  % 7 = bottom-left
+%    design.centerX - d, design.centerY;      % 8 = left
+%    ];
+% valid position pairs (opposite sides)
+%design.fixDotValidPairs = [
+%    1 5
+%    5 1
+%    2 6
+%    6 2
+%    3 7
+%    7 3
+%    4 8
+%    8 4
+%    ];
+
+% 1 . 2
+% 6 + 3
+% 5 . 4
 design.fixDotPositions = [
     design.centerX - d, design.centerY - d;  % 1 = top-left
-    design.centerX,     design.centerY - d;  % 2 = top
-    design.centerX + d, design.centerY - d;  % 3 = top-right
-    design.centerX + d, design.centerY;      % 4 = right
-    design.centerX + d, design.centerY + d   % 5 = bottom-right
-    design.centerX,     design.centerY + d;  % 6 = bottom
-    design.centerX - d, design.centerY + d;  % 7 = bottom-left
-    design.centerX - d, design.centerY;      % 8 = left
+    design.centerX + d, design.centerY - d;  % 2 = top-right
+    design.centerX + d, design.centerY;      % 3 = right
+    design.centerX + d, design.centerY + d   % 4 = bottom-right
+    design.centerX - d, design.centerY + d;  % 5 = bottom-left
+    design.centerX - d, design.centerY;      % 6 = left
     ];
-% valid position pairs (opposite sides)
 design.fixDotValidPairs = [
-    1 5
-    5 1
-    2 6
+    1 2
+    1 3
+    1 4
     6 2
-    3 7
-    7 3
-    4 8
-    8 4
+    6 3
+    6 4
+    5 2
+    5 3
+    5 4
+    2 1
+    2 6
+    2 5
+    3 1
+    3 6
+    3 5
+    4 1
+    4 6
+    4 5
     ];
+
 % frame rectangles around fix dots
+nPositions = size(design.fixDotPositions, 1);
 frameSize = design.fixDotFrameSizeInPixels;
-design.fixDotTextureRects = zeros(4, 8);
-for i = 1:8
+design.fixDotTextureRects = zeros(4,nPositions);
+for i = 1:nPositions
     x = design.fixDotPositions(i, 1);
     y = design.fixDotPositions(i, 2);
     design.fixDotTextureRects(:, i) = [
@@ -158,12 +192,12 @@ design.fixCrossColor = ptb.black;
 design.conditionColors = [[0.85 0.05 0.05]; [0.00 0.45 0.55]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
-design.fixDotTransparency       = 0.3; % 0.5
-design.fixDotColor              = [0.25, 0.25, 0.25];
+design.fixDotTransparency       = 0.1; % 0.5
+design.fixDotColor              = [0.45, 0.45, 0.45];
 
 % fixation dot frame(s)
 design.fixDotFrameLineWidth = 1;
-design.fixDotFrameColor = [0.75, 0.55, 0.75];
+design.fixDotFrameColor = [0.65, 0.65, 0.65];
 
 %% Additional visual parameters
 % fixation dot(s)/frame(s)

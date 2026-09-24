@@ -17,6 +17,11 @@ addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ptb = DataContainer();
+log = DataContainer();
+design = DataContainer();
+myPaths = DataContainer();
+
 log.reportCond = reportCondition.report;
 offline = true;
 useEyetracker = false;
@@ -34,16 +39,17 @@ else
 end
 
 %% Settings
-ptb = getPTBSettings(setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
-myPaths = getPaths(); % Paths
+ptb = getPTBSettings(ptb, setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
+myPaths = getPaths(myPaths); % Paths
 design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
-cleanupObj = onCleanup(@() closeAll(ptb,log,myPaths)); % make sure every connection and screen get closed in case of an error
+cleanupObj = onCleanup(@() closeAll(ptb, log, design,myPaths)); % make sure every connection and screen get closed in case of an error
 ptb.dummymode = dummymode;
 if offline
     gammaCleanup = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);  %#ok<NASGU> % Gamma correction 
 end
 %% Additional design elements
 design.waitTillStartDuration    = 3;
+showDotPositions(ptb,design,myPaths.stimuliLocation)
 
 %% Condition Table
 % Condition table
@@ -70,31 +76,33 @@ log.task = condition;
 switch condition
     case "main experiment"
             % Run main experiment
-            [log.suffix,log.reportCond] = input.autoChooseNextBlock(design.maxRunNr, myPaths.subjectDirectory, design.reportOrder);
+            [log.reportCond,log.suffix] = input.autoChooseNextBlock(design.maxRunNr, myPaths.subjectDirectory, design.reportOrder);
             log.runNr = input.autoChooseNextRun(design.maxRunNr, myPaths.subjectDirectory, log.suffix);
             if isequal(log.runNr,[]);return;end
             if offline
-                [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full');
+                [log, ptb, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo, 'full'); %#ok<ASGLU>
             else
-                [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full');
+                [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full'); %#ok<UNRCH>
             end
-            save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
+            %save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
     case "training" 
             % Input run number and part of the run
             log.runNr=1;
             ptb.useEyetracker = false;
+            [log.reportCond,log.suffix] = input.chooseNextBlock(design.reportOrder,[]);
             if offline
-                [~, ~, ~, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<ASGLU>
+                [~, ~, design, participantInfo] = perImAtOffline(log, ptb, design, myPaths, participantInfo,'training'); %#ok<ASGLU>
             else
-                [~, ~, ~, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'testing'); %#ok<UNRCH>
+                [~, ~, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'training'); %#ok<UNRCH>
             end
     case "present fixDot locations"
             presentFixDotLocations(ptb, design, myPaths.stimuliLocation);
 end    
 end
 
-function closeAll(ptb, log, myPaths)
+function closeAll(ptb, log, design,myPaths)
+disp('Closing open connections and saving data')
 % Eye tracker
 if isfield(ptb, 'useEyetracker') && ptb.useEyetracker && isfield(myPaths,'subjectDirectory')
     try
@@ -123,11 +131,10 @@ end
 % Save log LAST
 if isfield(myPaths,'subjectDirectory')
 try
-    save(fullfile(myPaths.subjectDirectory, ...
-        ['consent_log_' char(datetime('now','Format','yyyy-MM-dd_HHmmss'))]), ...
-        'log');
+    %save_utils.saveEnvironment(log,ptb,design,myPaths)
+    disp('TODO reinclude log (etc) saving')
 catch ME
-    warning('Could not save log: %s', ME.message);
+    warning('Could not save ptb data: %s', ME.message);
 end
 end
 end

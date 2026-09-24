@@ -49,7 +49,7 @@ if offline
 end
 %% Additional design elements
 design.waitTillStartDuration    = 3;
-showDotPositions(ptb,design,myPaths.stimuliLocation)
+%showDotPositions(ptb,design,myPaths.stimuliLocation)
 
 %% Condition Table
 % Condition table

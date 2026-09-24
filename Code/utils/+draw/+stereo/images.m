@@ -1,4 +1,4 @@
-function images(ptb, design, leftImage, rightImage)
+function images(ptb, design, leftImageTex, rightImageTex)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws background textures and images onto both buffers of a 
 % stereo display.
@@ -13,8 +13,7 @@ function images(ptb, design, leftImage, rightImage)
     % Select left-eye image buffer for drawing
     Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
     Screen('DrawTexture', ptb.window, design.backGroundTexture);        % Image background
-    image_tex_left = Screen('MakeTexture', ptb.window, leftImage);
-    Screen('DrawTexture', ptb.window, image_tex_left, [], ...          % Draw the image
+    Screen('DrawTexture', ptb.window, leftImageTex, [], ...          % Draw the image
             design.destinationRect);
     % Grey frame + circular aperture + ring + corner Xs
     Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
@@ -28,8 +27,7 @@ function images(ptb, design, leftImage, rightImage)
     % Select right-eye image buffer for drawing:
     Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
     Screen('DrawTexture', ptb.window, design.backGroundTexture);        % Image background
-    image_tex_right = Screen('MakeTexture', ptb.window, rightImage);
-    Screen('DrawTexture', ptb.window, image_tex_right, [], ...        % Draw the image
+    Screen('DrawTexture', ptb.window, rightImageTex, [], ...        % Draw the image
             design.destinationRect);
     % Grey frame + circular aperture + ring + corner Xs
     Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);

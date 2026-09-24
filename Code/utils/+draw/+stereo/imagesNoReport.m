@@ -1,4 +1,4 @@
-function imagesNoReport(ptb, design, leftImage, rightImage, selectedPair, dotTransparency)
+function imagesNoReport(ptb, design, leftImageTex, rightImageTex, selectedPair, dotTransparency)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws background textures, images and each one fixation
 % dot onto both buffers of a stereo display.
@@ -46,8 +46,7 @@ Screen('SelectStereoDrawBuffer', ptb.window, ptb.leftBuffer);
 % Background
 Screen('DrawTexture', ptb.window, design.backGroundTexture);
 % Image
-image_tex_left = Screen('MakeTexture', ptb.window, leftImage);
-Screen('DrawTexture', ptb.window, image_tex_left, [],design.destinationRect);
+Screen('DrawTexture', ptb.window, leftImageTex, [],design.destinationRect);
 % Grey frame + circular aperture + ring + corner Xs
 Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
 % Fixation cross
@@ -69,8 +68,7 @@ Screen('SelectStereoDrawBuffer', ptb.window, ptb.rightBuffer);
 % Background
 Screen('DrawTexture', ptb.window, design.backGroundTexture);
 % Image
-image_tex_right = Screen('MakeTexture', ptb.window, rightImage);
-Screen('DrawTexture', ptb.window, image_tex_right, [],design.destinationRect);
+Screen('DrawTexture', ptb.window, rightImageTex, [],design.destinationRect);
 % Grey frame + circular aperture + ring + corner Xs
 Screen('DrawTexture',ptb.window,design.frameTexture,[],design.frameRect);
 % Fixation cross

@@ -70,32 +70,7 @@ design.fixCrossCoords = [
 % Distance of fixation dots from the center
 design.fixDotDistanceInPixels = min(design.stimSizeInPixelsX / 2.3,design.stimSizeInPixelsY / 2.3) / 2; % 3 3 2
 d = design.fixDotDistanceInPixels;
-% screen coordinates of the 8 possible positions
-% 1 2 3
-% 8 + 4
-% 7 6 5
-%design.fixDotPositions = [
-%    design.centerX - d, design.centerY - d;  % 1 = top-left
-%    design.centerX,     design.centerY - d;  % 2 = top
-%    design.centerX + d, design.centerY - d;  % 3 = top-right
-%    design.centerX + d, design.centerY;      % 4 = right
-%    design.centerX + d, design.centerY + d   % 5 = bottom-right
-%    design.centerX,     design.centerY + d;  % 6 = bottom
-%    design.centerX - d, design.centerY + d;  % 7 = bottom-left
-%    design.centerX - d, design.centerY;      % 8 = left
-%    ];
-% valid position pairs (opposite sides)
-%design.fixDotValidPairs = [
-%    1 5
-%    5 1
-%    2 6
-%    6 2
-%    3 7
-%    7 3
-%    4 8
-%    8 4
-%    ];
-
+% screen coordinates of the 6 possible positions
 % 1 . 2
 % 6 + 3
 % 5 . 4
@@ -205,6 +180,29 @@ design.fixDotFadeDuration = 0.2;
 design.fixDotFadeFrames = round(design.fixDotFadeDuration / ptb.ifi);
 
 %% Create Textures
+% stimuli
+design.stimuli.house = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'house.png')));
+design.stimuli.face = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'face.png')));
+design.stimuli.house_low = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'house_low.png')));
+design.stimuli.face_low = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'face_low.png')));
+design.stimuli.house_catch = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'catch_house.png')));
+design.stimuli.face_catch = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'catch_face.png')));
+design.stimuli.houseFace = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'catch_houseFace.png')));
+design.stimuli.faceHouse = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'catch_faceHouse.png')));
+design.stimuli.grey_square = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'grey_square.png')));
+design.stimuli.superimposed = Screen('MakeTexture', ptb.window, ...
+    imread(fullfile(myPaths.stimuliLocation, 'superimposed.png')));
+
+
 % stimulus frame texture
 design.frameTexture = generate.createOApertureXFrame(...
     design.frameSizeInPixelsX, ...
@@ -242,4 +240,3 @@ design.housePictogramTexture = Screen('MakeTexture',ptb.window,housePictogram);
 design.facePictogramTexture = Screen('MakeTexture',ptb.window,facePictogram);
 
 end
-

@@ -215,7 +215,7 @@ switch condition
         cueTxt = design.cueTextImagery;
         if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "perception"
-        taskStimulus = cue + "_30";
+        taskStimulus = cue + "_low";
         cueTxt = design.cueTextPerception;
         if cue == "house"; fixCrossColor = design.houseColor; else; fixCrossColor = design.faceColor;end
     case "attention"
@@ -247,11 +247,11 @@ if reportCond == reportCondition.noReport
 end
 
 %% Load the respective images
-leftImage  = loadImage(myPaths.stimuliLocation, leftImgName);
-rightImage = loadImage(myPaths.stimuliLocation, rightImgName);
+leftImage = design.stimuli.(leftImgName);
+rightImage = design.stimuli.(rightImgName);
 taskImg = [];
 if taskStimulus ~= ""
-    taskImg = loadImage(myPaths.stimuliLocation, taskStimulus);
+    taskImg = design.stimuli.(taskStimulus);
 end
 
 trialStim = struct( ...

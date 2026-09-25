@@ -21,7 +21,7 @@ ptb = DataContainer();
 log = DataContainer();
 design = DataContainer();
 myPaths = DataContainer();
-cleanupObj = onCleanup(@() closeAll(ptb, log, design,myPaths)); % make sure every connection and screen get closed in case of an error
+cleanupObj = onCleanup(@() save_utils.closeAll(ptb, log, design,myPaths)); % make sure every connection and screen get closed in case of an error
 
 log.reportCond = reportCondition.report;
 offline = true;
@@ -69,7 +69,7 @@ participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub
 design = getInstructions(ptb.Keys,design,participantInfo);
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training"]);
+condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training","onset speedrun"]);
 log.task = condition;
 
 %% Switch case for different tasks
@@ -102,43 +102,7 @@ switch condition
         keyBindingTraining(ptb, design);
     case "BR training"
         binocularRivalryTraining(log,ptb,design,myPaths);
+    case "onset speedrun"
+        speedRunOnset(log, ptb, design, participantInfo);
 end    
-end
-
-function closeAll(ptb, log, design,myPaths)
-disp('Closing open connections and saving data')
-% Eye tracker
-if isfield(ptb, 'useEyetracker') && ptb.useEyetracker && isfield(myPaths,'subjectDirectory')
-    try
-        eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
-    catch ME
-        warning('Could not close EyeLink properly: %s', ME.message);
-    end
-end
-
-% DataPixx
-if isfield(ptb, 'usedatapixx') && ptb.usedatapixx
-    try
-        Datapixx('Close');
-    catch ME
-        warning('Could not close DataPixx: %s', ME.message);
-    end
-end
-
-% Psychtoolbox
-try
-    Screen('CloseAll');
-catch ME
-    warning('Could not close Psychtoolbox: %s', ME.message);
-end
-
-% Save log LAST
-if isfield(myPaths,'subjectDirectory')
-try
-    %save_utils.saveEnvironment(log,ptb,design,myPaths)
-    disp('TODO reinclude log (etc) saving')
-catch ME
-    warning('Could not save ptb data: %s', ME.message);
-end
-end
 end

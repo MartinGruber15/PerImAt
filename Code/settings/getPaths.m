@@ -1,6 +1,7 @@
-function myPaths = getPaths(myPaths)
+function myPaths = getPaths(myPaths,sub)
 myPaths.conditionPath = fullfile('..','condition');
 myPaths.stimuliLocation = fullfile('..','stimuli');
 myPaths.rawdataPath = fullfile('..','rawdata');
 myPaths.monCalDirPath = fullfile('..','monitor_calibration','EIZO_CIN5th_Brightness50_SpectraScan670_derived.mat');
+myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', sub]);
 end

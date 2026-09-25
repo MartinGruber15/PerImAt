@@ -1,7 +1,7 @@
-function presentFixDotLocations(ptb, design, imagePath)
+function presentFixDotLocations(ptb, design)
 
-image1 = loadImage(imagePath, 'house');
-image2 = loadImage(imagePath, 'face');
+image1 = design.stimuli.house;
+image2 = design.stimuli.face;
 
 % Randomly determine which image is shown first
 if rand < 0.5
@@ -23,15 +23,4 @@ for imgIdx = 1:2
     end
 end
 Screen('CloseAll')
-end
-
-function img = loadImage(folder, name)
-filename = fullfile(folder, name + ".png");
-info = imfinfo(filename);
-img = imread(filename);
-if isfield(info, 'Transparency')
-    alpha = info.Transparency;
-else
-    alpha = [];
-end
 end

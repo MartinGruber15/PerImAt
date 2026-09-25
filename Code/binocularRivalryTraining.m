@@ -116,6 +116,6 @@ if success
 else
     fprintf('Could not get results table');
 end
-
+input.adaptStimuli(log,myPaths);
 
 end

@@ -21,6 +21,7 @@ ptb = DataContainer();
 log = DataContainer();
 design = DataContainer();
 myPaths = DataContainer();
+cleanupObj = onCleanup(@() closeAll(ptb, log, design,myPaths)); % make sure every connection and screen get closed in case of an error
 
 log.reportCond = reportCondition.report;
 offline = true;
@@ -37,19 +38,19 @@ else
     stereomodeSequential = false; % true for shutter glasses at MPI
     design.maxRunNr                 = 5;
 end
+log.sub = input('Enter subject ID: ', 's');
 
 %% Settings
 ptb = getPTBSettings(ptb, setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
-myPaths = getPaths(myPaths); % Paths
+myPaths = getPaths(myPaths,log.sub); % Paths
 design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
-cleanupObj = onCleanup(@() closeAll(ptb, log, design,myPaths)); % make sure every connection and screen get closed in case of an error
 ptb.dummymode = dummymode;
 if offline
     gammaCleanup = gamma_correct.apply(ptb.window, myPaths.monCalDirPath);  %#ok<NASGU> % Gamma correction 
 end
 %% Additional design elements
 design.waitTillStartDuration    = 3;
-%showDotPositions(ptb,design,myPaths.stimuliLocation)
+%showDotPositions(ptb,design)
 
 %% Condition Table
 % Condition table
@@ -57,8 +58,8 @@ design.stimLookupTable = readtable(fullfile(myPaths.conditionPath,'stimLookupTab
 
 %% Experimenter input
 % Input subject number -> ID
-log.sub = input('Enter subject ID: ', 's');
-myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', log.sub]);
+%log.sub = input('Enter subject ID: ', 's');
+%myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', log.sub]);
 participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub);
 
 %% Set key bindings
@@ -96,7 +97,7 @@ switch condition
                 [~, ~, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'training'); %#ok<UNRCH>
             end
     case "present fixDot locations"
-            presentFixDotLocations(ptb, design, myPaths.stimuliLocation);
+            presentFixDotLocations(ptb, design);
     case "key binding training"
         keyBindingTraining(ptb, design);
     case "BR training"

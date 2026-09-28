@@ -160,6 +160,12 @@ design.frameThickness = 0.02;
 design.frameColor = ptb.black;
 design.crossesColor = ptb.black;
 design.frameBaseColor = ptb.grey;
+%pink noise
+design.pinkNoiseBackground = true;  % false -> plain grey background as before
+design.pinkNoiseMeanLum    = 0.5;   % mean luminance of the visible noise (0-1)
+design.pinkNoiseRMS        = 0.10;  % SD of the visible noise (0-1; same definition as targetRMS in createFMRIStimuli)
+design.pinkNoiseExponent   = 1;     % amplitude spectrum ~ 1/f^exponent (1 = pink)
+
 
 % fixation cross
 design.fixCrossLineWidth = 2;
@@ -182,33 +188,30 @@ design.fixDotFadeFrames = round(design.fixDotFadeDuration / ptb.ifi);
 %% Create Textures
 % stimuli
 stimuliParameters = loadLatestTrainingParameters(myPaths.subjectDirectory);
-design.stimuli.house = createAdaptiveTexture( ...
+[design.stimuli.house,design.masks.house,design.images.house] = createAdaptiveTexture( ...
     ptb, ...
     fullfile(myPaths.stimuliLocation, 'house.png'), ...
     stimuliParameters.houseLuminance, ...
     stimuliParameters.houseContrast);
-
-design.stimuli.face = createAdaptiveTexture( ...
+[design.stimuli.face,design.masks.face,design.images.face] = createAdaptiveTexture( ...
     ptb, ...
     fullfile(myPaths.stimuliLocation, 'face.png'), ...
     stimuliParameters.faceLuminance, ...
     stimuliParameters.faceContrast);
-%design.stimuli.house = Screen('MakeTexture', ptb.window, ...
-%    imread(fullfile(myPaths.stimuliLocation, 'house.png')));
-%design.stimuli.face = Screen('MakeTexture', ptb.window, ...
-%    imread(fullfile(myPaths.stimuliLocation, 'face.png')));
 design.stimuli.house_low = Screen('MakeTexture', ptb.window, ...
     imread(fullfile(myPaths.stimuliLocation, 'house_low.png')));
 design.stimuli.face_low = Screen('MakeTexture', ptb.window, ...
     imread(fullfile(myPaths.stimuliLocation, 'face_low.png')));
-design.stimuli.house_catch = Screen('MakeTexture', ptb.window, ...
-    imread(fullfile(myPaths.stimuliLocation, 'catch_house.png')));
-design.stimuli.face_catch = Screen('MakeTexture', ptb.window, ...
-    imread(fullfile(myPaths.stimuliLocation, 'catch_face.png')));
-design.stimuli.houseFace = Screen('MakeTexture', ptb.window, ...
-    imread(fullfile(myPaths.stimuliLocation, 'catch_houseFace.png')));
-design.stimuli.faceHouse = Screen('MakeTexture', ptb.window, ...
-    imread(fullfile(myPaths.stimuliLocation, 'catch_faceHouse.png')));
+[design.stimuli.houseFace,design.masks.houseFace,design.images.houseFace] = createTexture(ptb,fullfile(myPaths.stimuliLocation, 'catch_houseFace.png'));
+[design.stimuli.faceHouse,design.masks.faceHouse,design.images.faceHouse] = createTexture(ptb,fullfile(myPaths.stimuliLocation, 'catch_faceHouse.png'));
+%design.stimuli.house_catch = Screen('MakeTexture', ptb.window, ...
+%    imread(fullfile(myPaths.stimuliLocation, 'catch_house.png')));
+%design.stimuli.face_catch = Screen('MakeTexture', ptb.window, ...
+%    imread(fullfile(myPaths.stimuliLocation, 'catch_face.png')));
+%design.stimuli.houseFace = Screen('MakeTexture', ptb.window, ...
+%    imread(fullfile(myPaths.stimuliLocation, 'catch_houseFace.png')));
+%design.stimuli.faceHouse = Screen('MakeTexture', ptb.window, ...
+%    imread(fullfile(myPaths.stimuliLocation, 'catch_faceHouse.png')));
 design.stimuli.grey_square = Screen('MakeTexture', ptb.window, ...
     imread(fullfile(myPaths.stimuliLocation, 'grey_square.png')));
 design.stimuli.superimposed = Screen('MakeTexture', ptb.window, ...
@@ -253,11 +256,25 @@ design.facePictogramTexture = Screen('MakeTexture',ptb.window,facePictogram);
 
 end
 
-function texture = createAdaptiveTexture(ptb, filename, luminance, contrast)
-image = imread(filename);
+function [texture,alpha,image] = createAdaptiveTexture(ptb, filename, luminance, contrast)
+[image,~,alpha] = imread(filename);
 image = double(image);
 meanImage = mean(image(:));
 image = (image - meanImage) .* contrast + luminance;
 image = uint8(image);
-texture = Screen('MakeTexture', ptb.window, image);
+if ~isempty(alpha)
+    rgba = cat(3, image, alpha);  % grayscale→RGB + alpha
+    texture = Screen('MakeTexture', ptb.window, rgba);
+else
+    texture = Screen('MakeTexture', ptb.window, image);
+end
+end
+function [texture,alpha,image] = createTexture(ptb, filename)
+[image,~,alpha] = imread(filename);
+if ~isempty(alpha)
+    rgba = cat(3, image, alpha);  % grayscale→RGB + alpha
+    texture = Screen('MakeTexture', ptb.window, rgba);
+else
+    texture = Screen('MakeTexture', ptb.window, image);
+end
 end

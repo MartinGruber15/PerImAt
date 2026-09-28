@@ -10,13 +10,13 @@ nTrials=30;
 display.stereo.alignFusion(ptb, participantInfo);
 display.stereo.instruction(ptb,design, design.Introduction, design.instructionWaitDuration, false);
 
-house = design.stimuli.house;
-face = design.stimuli.face;
+
 grey = design.stimuli.grey_square;
-stimuli = [house,face];
 % Loop trough all trials
 trialStart = GetSecs();
 for trial = 1:nTrials
+    house = generate.makePinkNoiseTex(ptb.window, design.images.house, design.masks.house, design); 
+    face = generate.makePinkNoiseTex(ptb.window, design.images.face, design.masks.face, design);
     if rand < 0.5
         stimuli = [house, face];
     else

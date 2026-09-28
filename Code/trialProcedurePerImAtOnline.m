@@ -49,8 +49,7 @@ for trial = 1:rows
         catchType = "";
     end
 
-    %trialStim = setUpStimuli(trialID, stimLookupTable, myPaths, design, condition);
-    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType, log.reportCond);
+    trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, ptb, design, condition, catchType, log.reportCond);
     if prevCondition ~= condition
         remindAssociation = true;
         prevCondition = condition; % Update previous condition for the next trial
@@ -178,7 +177,7 @@ else
 end
 end
 
-function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, myPaths, design, condition, catchType,reportCond)
+function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, ptb, design, condition, catchType,reportCond)
 %% Determine the stimuli for the current trial
 %note: as the file has 8 entries but we dont have a color condition each
 %exact condition is repeated once. But tbh this does make sense so the runs
@@ -197,11 +196,11 @@ else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
     if reportCond == reportCondition.report % in report condition, there is only mock rivalry
-        rightEyeStim = "catch_" + catchParts(2);
-        leftEyeStim = "catch_" + catchParts(2);
+        rightEyeStim = catchParts(2);
+        leftEyeStim = catchParts(2);
     else % no report condition has real rivalry in catch trials
-        rightEyeStim = "catch_" + catchParts(2);
-        leftEyeStim = "catch_" + catchParts(3);
+        rightEyeStim = catchParts(2);
+        leftEyeStim = catchParts(3);
     end
     leftImgName = leftEyeStim;
     rightImgName = rightEyeStim;
@@ -247,8 +246,8 @@ if reportCond == reportCondition.noReport
 end
 
 %% Load the respective images
-leftImage = design.stimuli.(leftImgName);
-rightImage = design.stimuli.(rightImgName);
+leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design); 
+rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
 taskImg = [];
 if taskStimulus ~= ""
     taskImg = design.stimuli.(taskStimulus);

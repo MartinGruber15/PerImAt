@@ -118,7 +118,7 @@ end
 
 
 function value = getParam(s, name, default)
-if isfield(s, name) && ~isempty(s.(name))
+if s.hasField(name) && ~isempty(s.(name))
     value = s.(name);
 else
     value = default;

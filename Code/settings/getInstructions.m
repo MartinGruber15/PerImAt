@@ -6,13 +6,13 @@ function [design] = getInstructions(keys, design, participantInfo)
 %   output:
 %       design - updating the design input struct with instructions
 if nargin < 2 || isempty(design)
-    design = struct;
+    design = DataContainer();
 end
 % design
-if ~isfield(design, 'stimulusPresentationTime')
+if ~design.hasField('stimulusPresentationTime')
     design.stimulusPresentationTime = 1;
 end
-if ~isfield(design, 'ITI')
+if ~design.hasField('ITI')
     design.ITI = 10;
 end
 if ~isfield(participantInfo, 'language')

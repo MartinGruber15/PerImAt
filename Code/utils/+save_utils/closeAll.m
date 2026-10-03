@@ -1,7 +1,7 @@
 function closeAll(ptb, log, design,myPaths)
 disp('Closing open connections and saving data')
 % Eye tracker
-if isfield(ptb, 'useEyetracker') && ptb.useEyetracker && isfield(myPaths,'subjectDirectory')
+if ptb.hasField('useEyetracker') && ptb.useEyetracker && myPaths.hasField('subjectDirectory')
     try
         eyetracking.closeEyetracker(ptb, myPaths.subjectDirectory);
     catch ME
@@ -26,9 +26,9 @@ catch ME
 end
 
 % Save log LAST
-if isfield(myPaths,'subjectDirectory')
+if myPaths.hasField('subjectDirectory')
     try
-        %save_utils.saveEnvironment(log,ptb,design,myPaths)
+        save_utils.saveEnvironment(log,ptb,design,myPaths)
         disp('TODO reinclude log (etc) saving')
     catch ME
         warning('Could not save ptb data: %s', ME.message);

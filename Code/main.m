@@ -57,9 +57,6 @@ design.waitTillStartDuration    = 3;
 design.stimLookupTable = readtable(fullfile(myPaths.conditionPath,'stimLookupTable.csv'));         % possible stimulus combinations
 
 %% Experimenter input
-% Input subject number -> ID
-%log.sub = input('Enter subject ID: ', 's');
-%myPaths.subjectDirectory = fullfile(myPaths.rawdataPath,['sub-', log.sub]);
 participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub);
 
 %% Set key bindings
@@ -84,7 +81,6 @@ switch condition
             else
                 [log, ptb, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo, 'full'); %#ok<UNRCH>
             end
-            %save_utils.saveEnvironment(log,ptb,design,myPaths, participantInfo)
 
     case "training" 
             % Input run number and part of the run
@@ -103,6 +99,11 @@ switch condition
     case "BR training"
         binocularRivalryTraining(log,ptb,design,myPaths);
     case "onset speedrun"
-        speedRunOnset(log, ptb, design, participantInfo);
+        input.adaptStimuli(log,myPaths);
+        participantInfo = speedRunOnset(log, ptb, design, participantInfo, myPaths);
+    case "onset test"
+        % fixed contrasts of the latest training file, nothing is adapted
+        participantInfo = speedRunOnsetTest(log, ptb, design, participantInfo, myPaths);
 end    
+save(myPaths.subjectDirectory, "participantInfo")
 end

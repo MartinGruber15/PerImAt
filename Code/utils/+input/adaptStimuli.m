@@ -3,9 +3,22 @@ function stimuliParameters = adaptStimuli(log,myPaths)
 %
 % Ask the experimenter for contrast/luminance values and save them to a
 % uniquely numbered training configuration file.
+%
+% adaptStimuli(log,myPaths)                   defaults = latest training file
+% adaptStimuli(log,myPaths,presetParameters)  defaults = fields of the struct
+%     presetParameters (e.g. the optimised contrasts from speedRunOnset) where
+%     given, latest training file for all others.
 %% Defaults
 
 stimuliParameters = loadLatestTrainingParameters(myPaths.subjectDirectory);
+if nargin >= 3 && ~isempty(presetParameters)
+    presetNames = fieldnames(presetParameters);
+    for i = 1:numel(presetNames)
+        stimuliParameters.(presetNames{i}) = presetParameters.(presetNames{i});
+    end
+    fprintf('\nThe values below are the OPTIMISED parameters (press Enter to keep them).\n');
+end
+
 
 %% Find existing training configuration files
 pattern = fullfile(myPaths.subjectDirectory,'*_training_*.mat');
@@ -34,26 +47,37 @@ while adaptParameters
     fprintf('=================================================\n');
     fprintf('        ADAPT TRAINING STIMULUS PARAMETERS\n');
     fprintf('=================================================\n');
-    % House
-    fprintf('\nHouse stimulus:\n');
-    stimuliParameters.houseLuminance = inputWithDefault('Luminance',stimuliParameters.houseLuminance);
-    stimuliParameters.houseContrast = inputWithDefault('Contrast',stimuliParameters.houseContrast);
+    fprintf('\nStimuli\n')
+    stimuliParameters.houseContrast = inputWithDefault('House contrast',stimuliParameters.houseContrast);
+    stimuliParameters.faceContrast = inputWithDefault('Face contrast',stimuliParameters.faceContrast);
 
-    % Face
-    fprintf('\nFace stimulus:\n');
-    stimuliParameters.faceLuminance = inputWithDefault('Luminance',stimuliParameters.faceLuminance);
-    stimuliParameters.faceContrast = inputWithDefault('Contrast',stimuliParameters.faceContrast);
+    % Eye-specific contrast (multiplied onto the house/face contrast above)
+    fprintf('\nEye-specific contrast (multiplies stimulus contrast):\n');
+    stimuliParameters.leftEyeContrast  = inputWithDefault('Left eye contrast',stimuliParameters.leftEyeContrast);
+    stimuliParameters.rightEyeContrast = inputWithDefault('Right eye contrast',stimuliParameters.rightEyeContrast);
+
+    % Configuration contrast: multiplies the contrast of house-left + face-right
+    % and divides that of house-right + face-left (1 = no difference)
+    fprintf('\nConfiguration contrast (>1 strengthens house-left/face-right, weakens house-right/face-left):\n');
+    stimuliParameters.configContrast = inputWithDefault('Configuration contrast',stimuliParameters.configContrast);
 
     %% Display selected parameters
     fprintf('\n---------------------------------------------\n');
     fprintf('Selected parameters:\n');
-    fprintf('\nHouse:\n');
-    fprintf('  Luminance: %.4f\n',stimuliParameters.houseLuminance);
-    fprintf('  Contrast:  %.4f\n',stimuliParameters.houseContrast);
-    fprintf('\nFace:\n');
-    fprintf('  Luminance: %.4f\n',stimuliParameters.faceLuminance);
-    fprintf('  Contrast:  %.4f\n',stimuliParameters.faceContrast);
+    fprintf('\nStimuli\n')
+    fprintf('  House contrast:  %.4f\n',stimuliParameters.houseContrast);
+    fprintf('  Face contrast:  %.4f\n',stimuliParameters.faceContrast);
+    fprintf('\nEye (multiplied onto stimulus contrast):\n');
+    fprintf('  Left eye contrast:  %.4f\n',stimuliParameters.leftEyeContrast);
+    fprintf('  Right eye contrast: %.4f\n',stimuliParameters.rightEyeContrast);
     fprintf('---------------------------------------------\n');
+    fprintf('\nResulting contrast per texture (stimulus x eye):\n');
+    fprintf('  FaceLeft:   %.4f\n',stimuliParameters.faceContrast  * stimuliParameters.leftEyeContrast);
+    fprintf('  FaceRight:  %.4f\n',stimuliParameters.faceContrast  * stimuliParameters.rightEyeContrast);
+    fprintf('  HouseLeft:  %.4f\n',stimuliParameters.houseContrast * stimuliParameters.leftEyeContrast);
+    fprintf('  HouseRight: %.4f\n',stimuliParameters.houseContrast * stimuliParameters.rightEyeContrast);
+    fprintf('---------------------------------------------\n');
+
 
     %% Confirm
     while true

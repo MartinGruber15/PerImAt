@@ -90,7 +90,13 @@ for trial = 1:rows
     stimOnset = Screen('Flip', ptb.window, taskEnd);
     stimOffset = stimOnset + design.stimulusPresentationTime;
     if ptb.useEyetracker
-        Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim));
+        if log.reportCond == reportCondition.report
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, isCatch));
+        else
+            fixPointLeft  = strjoin(string(trialStim.selectedPair(:,1)), ',');
+            fixPointRight = strjoin(string(trialStim.selectedPair(:,2)), ',');
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s fixPointLeft=%s fixPointRight=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, fixPointLeft, fixPointRight,isCatch));
+        end
     end
     % draw response phase (only fixation cross)
     draw.stereo.blanks(ptb,design);
@@ -162,17 +168,6 @@ for trial = 1:rows
 end
 end
 
-function img = loadImage(folder, name)
-filename = fullfile(folder, name + ".png");
-info = imfinfo(filename);
-img = imread(filename);
-if isfield(info, 'Transparency')
-    alpha = info.Transparency;
-else
-    alpha = [];
-end
-end
-
 function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, ptb, design, condition, catchType,reportCond)
 %% Determine the stimuli for the current trial
 %note: as the file has 8 entries but we dont have a color condition each
@@ -186,8 +181,8 @@ if ~isCatch
     rightEyeStim = stimRow.rightEye{1};
     leftEyeStim = stimRow.leftEye{1};
     cue = stimRow.cue{1};
-    leftImgName  = leftEyeStim; %  + "_gray";
-    rightImgName = rightEyeStim; % + "_gray";
+    leftImgName  = leftEyeStim;
+    rightImgName = rightEyeStim;
 else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
@@ -243,11 +238,13 @@ if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.du
 end
 
 %% Load the respective images
-leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design); 
+% eye-specific textures (houseL/houseR/faceL/faceR); stimuli without eye-specific
+% version (e.g. catch images houseFace/faceHouse) fall back to the plain name
+leftImgName  = eyeSpecificName(design, leftImgName,  'L');
+rightImgName = eyeSpecificName(design, rightImgName, 'R');
+leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design);
 rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
 
-%leftImage = design.stimuli.(leftImgName);
-%rightImage = design.stimuli.(rightImgName);
 taskImg = [];
 if taskStimulus ~= ""
     taskImg = design.stimuli.(taskStimulus);
@@ -264,4 +261,13 @@ trialStim = struct( ...
     "finalQText", finalQuestion,...
     "fixCrossColor", fixCrossColor);
 if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual); trialStim.selectedPair = selectedPair;end
+end
+
+function name = eyeSpecificName(design, stimName, eyeSuffix)
+% Returns e.g. 'houseL' for ('house','L') if that texture exists, else the plain name
+name = char(stimName) + string(eyeSuffix);
+name = char(name);
+if ~isfield(design.images, name)
+    name = char(stimName);
+end
 end

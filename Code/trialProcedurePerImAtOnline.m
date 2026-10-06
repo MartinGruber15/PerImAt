@@ -93,7 +93,13 @@ for trial = 1:rows
     stimOnset = Screen('Flip', ptb.window, taskEnd);
     stimOffset = stimOnset + design.stimulusPresentationTime;
     if ptb.useEyetracker
-        Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim));
+        if log.reportCond == reportCondition.report
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, isCatch));
+        else
+            fixPointLeft  = strjoin(string(trialStim.selectedPair(:,1)), ',');
+            fixPointRight = strjoin(string(trialStim.selectedPair(:,2)), ',');
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s fixPointLeft=%s fixPointRight=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, fixPointLeft, fixPointRight,isCatch));
+        end
     end
     % draw response phase (only fixation cross)
     draw.stereo.blanks(ptb,design);
@@ -246,8 +252,13 @@ if reportCond == reportCondition.noReport
 end
 
 %% Load the respective images
-leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design); 
+% eye-specific textures (houseL/houseR/faceL/faceR); stimuli without eye-specific
+% version (e.g. catch images houseFace/faceHouse) fall back to the plain name
+leftImgName  = eyeSpecificName(design, leftImgName,  'L');
+rightImgName = eyeSpecificName(design, rightImgName, 'R');
+leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design);
 rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
+
 taskImg = [];
 if taskStimulus ~= ""
     taskImg = design.stimuli.(taskStimulus);
@@ -265,7 +276,14 @@ trialStim = struct( ...
 if reportCond == reportCondition.noReport; trialStim.selectedPair = selectedPair;end
 end
 
-
+function name = eyeSpecificName(design, stimName, eyeSuffix)
+% Returns e.g. 'houseL' for ('house','L') if that texture exists, else the plain name
+name = char(stimName) + string(eyeSuffix);
+name = char(name);
+if ~isfield(design.images, name)
+    name = char(stimName);
+end
+end
 
 
 

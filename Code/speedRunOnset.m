@@ -14,10 +14,31 @@ function participantInfo = speedRunOnset(log, ptb, design, participantInfo,myPat
 % (left/right), exactly as in getVisualDesignSettings.  The optimiser works
 % with three numbers: overall level, house/face ratio, left/right ratio
 % (see +contrastBO).  The starting point is the latest saved training file.
-% At the end the optimum is offered to input.adaptStimuli as default, so
-% accepting it saves it as the next training file (used by the experiment).
+% At the end the contrast steps of all trials are plotted (and saved as .png
+% next to the optimisation record), and the optimum is offered to
+% input.adaptStimuli as default, so accepting it saves it as the next training
+% file (used by the experiment).
+%
+% Two models can be used (flag useConfigModel below):
+%   false : overall level + house/face ratio + left/right ratio (3 numbers)
+%   true  : the two stimulus configurations (house left + face right = pair A,
+%           house right + face left = pair B) are modelled separately, so all
+%           four textures can get an individual contrast.  Each pair has its
+%           own balance curve and mixed-percept curve, and its own level.
+%
+% Which stimulus goes to which eye is NOT chosen by the model: house left /
+% house right is a fixed, randomly shuffled sequence that is balanced within
+% every group of 4 trials (exactly 50% each over the run).  The model only
+% chooses the contrasts.
 
 %% Settings of the adaptive procedure
+useConfigModel = true;   % true : contrast of each of the 4 textures is adapted individually
+                         %        (separate model per stimulus configuration)
+                         % false: previous model (overall level, house/face ratio, left/right ratio)
+levelMode = 'mixed';     % what decides the overall contrast level g (and with the config model the pair levels):
+                         % 'mixed'  : level with the fewest expected mixed percepts (previous behaviour)
+                         % 'balance': mixed percepts ignored; level where the differences needed for balance are smallest
+                         % 'fixed'  : level stays at its start value, only the ratios/differences are adapted
 nTrials     = 120;   % total trials (~5.5 s each; more trials = more precise)
 reportEvery = 20;    % print dominance proportions / contrasts every N trials
 % Search range (cMin/cMax, max. ratio) and priors: contrastBO.defaultSettings
@@ -32,8 +53,13 @@ stimuliParameters = loadLatestTrainingParameters(myPaths.subjectDirectory);
 x0 = contrastBO.contrastsToParams(stimuliParameters.houseContrast, ...
     stimuliParameters.faceContrast, ...
     stimuliParameters.leftEyeContrast, ...
-    stimuliParameters.rightEyeContrast);
-cfg = contrastBO.defaultSettings(x0);
+    stimuliParameters.rightEyeContrast, ...
+    stimuliParameters.configContrast);
+if useConfigModel
+    cfg = contrastBO.defaultSettings(x0, 'perConfig', levelMode);
+else
+    cfg = contrastBO.defaultSettings(x0, 'shared', levelMode);
+end
 
 % Raw stimulus images: contrast is re-applied for every trial
 [rawHouse,~,maskHouse] = imread(fullfile(myPaths.stimuliLocation, 'house.png'));
@@ -45,12 +71,15 @@ faceEye      = cell(nTrials,1);   % which eye the face was shown to: 'left'/'rig
 response     = cell(nTrials,1);   % what the participant reported: 'house'/'face'/'none'
 perceivedEye = cell(nTrials,1);   % eye implied by the report: 'left'/'right'/'none'
 
-trialParams    = nan(nTrials,3);      % [g s e] used in each trial (see contrastBO.paramsToContrasts)
+trialParams    = nan(nTrials,cfg.nParams);   % [g s e] ([g s e i] with the config model) of each trial, see contrastBO.paramsToContrasts
 shownContrast  = nan(nTrials,2);      % contrast of [house face] as shown in each trial
 houseLeftTrial = false(nTrials,1);    % true: house shown to the left eye
 respCode       = zeros(nTrials,1);    % 1 = house, 0 = face, -1 = none/mixed
 
-% House left / house right are balanced within every group of 4 trials
+% Eye assignment (house left / house right) is drawn here, BEFORE the run, and
+% does not depend on the model or on the responses: every group of 4 trials
+% contains 2x house-left and 2x house-right in random order (nTrials = 120 ->
+% exactly 60 / 60).  This keeps stimulus bias and eye bias separable.
 for k = 1:4:nTrials
     grp = [true true false false];
     grp = grp(randperm(4));
@@ -68,7 +97,8 @@ KbQueueCreate;
 
 grey = design.stimuli.grey_square;
 fprintf('\nStarting adaptive contrast run: %d trials, report every %d.\n', nTrials, reportEvery);
-cStart = contrastBO.paramsToContrasts(cfg.center);
+cStart = contrastBO.paramsToContrasts(cfg.center, cfg.i0);
+fprintf('Model: %s | level rule: %s\n', cfg.mode, cfg.levelMode);
 fprintf('Start contrasts: FaceLeft %.2f | FaceRight %.2f | HouseLeft %.2f | HouseRight %.2f\n', ...
     cStart.faceLeft, cStart.faceRight, cStart.houseLeft, cStart.houseRight);
 
@@ -83,7 +113,7 @@ for trial = 1:nTrials
             houseLeftTrial(1:trial-1), respCode(1:trial-1), cfg);
         x = contrastBO.chooseParams(model, cfg, 'sample');   % Thompson sampling
     end
-    c = contrastBO.paramsToContrasts(x);
+    c = contrastBO.paramsToContrasts(x, cfg.i0);
     trialParams(trial,:) = x;
 
     %% 2. Eye-specific textures with these contrasts
@@ -161,7 +191,7 @@ display.stereo.instruction(ptb, design,design.RunIsOver, design.instructionWaitD
 %% Final optimum: most probable parameters given all trials
 model  = contrastBO.fitModels(trialParams, houseLeftTrial, respCode, cfg);
 xFinal = contrastBO.chooseParams(model, cfg, 'map');
-cFinal = contrastBO.paramsToContrasts(xFinal);
+cFinal = contrastBO.paramsToContrasts(xFinal, cfg.i0);
 pred   = contrastBO.predictAt(model, xFinal, cfg);
 
 fprintf('\n=================================================\n');
@@ -173,11 +203,15 @@ fprintf('  FaceLeft:   %.4f\n', cFinal.faceLeft);
 fprintf('  FaceRight:  %.4f\n', cFinal.faceRight);
 fprintf('  HouseLeft:  %.4f\n', cFinal.houseLeft);
 fprintf('  HouseRight: %.4f\n', cFinal.houseRight);
-fprintf('  (= stimulus contrast: house %.4f, face %.4f  x  eye contrast: left %.4f, right %.4f)\n', ...
-    cFinal.houseContrast, cFinal.faceContrast, cFinal.leftEyeContrast, cFinal.rightEyeContrast);
+fprintf('  (= stimulus contrast: house %.4f, face %.4f  x  eye contrast: left %.4f, right %.4f  x configuration contrast %.4f for pair HouseLeft/FaceRight, / for pair HouseRight/FaceLeft)\n', ...
+    cFinal.houseContrast, cFinal.faceContrast, cFinal.leftEyeContrast, cFinal.rightEyeContrast, cFinal.configContrast);
 fprintf('  Model expects at these contrasts: house %.0f%% | left eye %.0f%% | mixed %.0f%%\n', ...
     100*pred.pHouse, 100*pred.pLeft, 100*pred.pMixed);
-atLimit = abs(xFinal(2)) > cfg.maxLogRatio - 0.02 || abs(xFinal(3)) > cfg.maxLogRatio - 0.02;
+if strcmp(cfg.mode, 'perConfig')
+    fprintf('  Pair HouseLeft/FaceRight : house %.0f%% of answered, mixed %.0f%%\n', 100*pred.pA, 100*pred.mixA);
+    fprintf('  Pair HouseRight/FaceLeft : house %.0f%% of answered, mixed %.0f%%\n', 100*pred.pB, 100*pred.mixB);
+end
+atLimit = strcmp(cfg.mode, 'shared') && (abs(xFinal(2)) > cfg.maxLogRatio - 0.02 || abs(xFinal(3)) > cfg.maxLogRatio - 0.02);
 if atLimit
     fprintf(2, 'WARNING: a balance point reached the limit of the search range (factor %.1f).\n', exp(cfg.maxLogRatio));
 end
@@ -215,13 +249,26 @@ fprintf('FaceLeftEye: %d | FaceRightEye: %d | HouseLeftEye: %d | HouseRightEye: 
 subLabel = log.sub;
 if isnumeric(subLabel); subLabel = num2str(subLabel); end
 subLabel = char(subLabel);
-boResult = struct('cfg', cfg, 'trialParams', trialParams, 'shownContrast', shownContrast, ...
+boResult = struct('mode', cfg.mode, 'cfg', cfg, 'trialParams', trialParams, 'shownContrast', shownContrast, ...
     'houseLeft', houseLeftTrial, 'response', {response}, 'respCode', respCode, ...
     'model', model, 'finalParams', xFinal, 'finalContrasts', cFinal, 'prediction', pred);
 boFile = fullfile(myPaths.subjectDirectory, ...
     sprintf('%s_onsetBO_%s.mat', subLabel, datestr(now,'yyyymmdd_HHMMSS')));
 save(boFile, 'boResult');
 fprintf('\nOptimisation record saved to:\n%s\n', boFile);
+
+% Visualise the contrast steps of the run.  The Psychtoolbox window is closed
+% first, otherwise it covers the figure.
+Screen('CloseAll');
+ListenChar(1);
+fig = contrastBO.plotSteps(trialParams, respCode, houseLeftTrial, cfg, xFinal);
+figFile = [boFile(1:end-4) '.png'];
+try
+    saveas(fig, figFile);
+    fprintf('Contrast-step figure saved to:\n%s\n', figFile);
+catch
+    fprintf('Could not save the contrast-step figure automatically.\n');
+end
 
 log.end = 'Success';
 log.response     = response;
@@ -238,7 +285,8 @@ finalParameters = struct( ...
     'houseContrast',    cFinal.houseContrast, ...
     'faceContrast',     cFinal.faceContrast, ...
     'leftEyeContrast',  cFinal.leftEyeContrast, ...
-    'rightEyeContrast', cFinal.rightEyeContrast);
+    'rightEyeContrast', cFinal.rightEyeContrast, ...
+    'configContrast',   cFinal.configContrast);
 input.adaptStimuli(log,myPaths,finalParameters);
 
 end
@@ -255,7 +303,7 @@ idxRec = max(1, trial-reportEvery+1):trial;
 
 model = contrastBO.fitModels(trialParams(idxAll,:), houseLeft(idxAll), respCode(idxAll), cfg);
 xb = contrastBO.chooseParams(model, cfg, 'map');
-c  = contrastBO.paramsToContrasts(xb);
+c  = contrastBO.paramsToContrasts(xb, cfg.i0);
 pr = contrastBO.predictAt(model, xb, cfg);
 
 fprintf('\n--- Trial %d: progress ---------------------------------\n', trial);
@@ -263,10 +311,25 @@ fprintf('Last %2d trials: house %3.0f%% | face %3.0f%% | left eye %3.0f%% | righ
     numel(idxRec), 100*hR, 100*(1-hR), 100*lR, 100*(1-lR), 100*mR);
 fprintf('All trials   : house %3.0f%% | face %3.0f%% | left eye %3.0f%% | right eye %3.0f%% | mixed %3.0f%%  (contrasts varied)\n', ...
     100*hA, 100*(1-hA), 100*lA, 100*(1-lA), 100*mA);
+% observed responses per stimulus configuration (all trials so far)
+for pairA = [true false]
+    sel = houseLeft(idxAll) == pairA;
+    r = respCode(idxAll);  r = r(sel);
+    if pairA, nm = 'HouseLeft /FaceRight'; else, nm = 'HouseRight/FaceLeft '; end
+    fprintf('Pair %s: %3d trials | house %3d | face %3d | mixed %3d\n', ...
+        nm, numel(r), sum(r == 1), sum(r == 0), sum(r < 0));
+end
 fprintf('Best estimate: FaceLeft %.2f | FaceRight %.2f | HouseLeft %.2f | HouseRight %.2f\n', ...
     c.faceLeft, c.faceRight, c.houseLeft, c.houseRight);
-fprintf('Model expects: house %3.0f%% | left eye %3.0f%% | mixed %3.0f%%   (balance point 90%% range: house/face contrast ratio %.2f-%.2f, left/right %.2f-%.2f)\n', ...
-    100*pr.pHouse, 100*pr.pLeft, 100*pr.pMixed, exp(pr.sCI(1)), exp(pr.sCI(2)), exp(pr.eCI(1)), exp(pr.eCI(2)));
+if strcmp(cfg.mode, 'perConfig')
+    fprintf('Model expects: house %3.0f%% | left eye %3.0f%% | mixed %3.0f%%   (pair A mixed %.0f%%, pair B mixed %.0f%%)\n', ...
+        100*pr.pHouse, 100*pr.pLeft, 100*pr.pMixed, 100*pr.mixA, 100*pr.mixB);
+    fprintf('               balance point 90%% range, house/face contrast ratio: pair A %.2f-%.2f | pair B %.2f-%.2f\n', ...
+        exp(pr.dACI(1)), exp(pr.dACI(2)), exp(pr.dBCI(1)), exp(pr.dBCI(2)));
+else
+    fprintf('Model expects: house %3.0f%% | left eye %3.0f%% | mixed %3.0f%%   (balance point 90%% range: house/face contrast ratio %.2f-%.2f, left/right %.2f-%.2f)\n', ...
+        100*pr.pHouse, 100*pr.pLeft, 100*pr.pMixed, exp(pr.sCI(1)), exp(pr.sCI(2)), exp(pr.eCI(1)), exp(pr.eCI(2)));
+end
 end
 
 function [pHouse, pLeft, pMixed] = observedShares(respCode, houseLeft)

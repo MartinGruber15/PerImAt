@@ -1,9 +1,9 @@
 function main(setUp)
 sca;
-Screen('Preference', 'SkipSyncTests', 1); %TODO
+%Screen('Preference', 'SkipSyncTests', 1); %TODO
 Screen('Preference', 'Verbosity', 1);  % Only Errors + warnings
-opacity = 0.8;
-PsychDebugWindowConfiguration([], opacity)
+%opacity = 0.8;
+%PsychDebugWindowConfiguration([], opacity)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
 % Author: Martin Gruber

@@ -1,4 +1,4 @@
-function stimuliParameters = adaptStimuli(log,myPaths)
+function stimuliParameters = adaptStimuli(log,myPaths,presetParameters)
 % adaptTrainingStimuli
 %
 % Ask the experimenter for contrast/luminance values and save them to a

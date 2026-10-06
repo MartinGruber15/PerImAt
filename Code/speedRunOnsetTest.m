@@ -1,4 +1,4 @@
-function speedRunOnsetTest(log, ptb, design, participantInfo, myPaths)
+function participantInfo = speedRunOnsetTest(log, ptb, design, participantInfo, myPaths)
 % speedRunOnsetTest  Onset-rivalry test run with FIXED contrasts.
 %
 % Same trial procedure as speedRunOnset, but nothing is adapted: the four

@@ -3,8 +3,12 @@ function fig = plotSteps(trialParams, respCode, houseLeft, cfg, xFinal, visible)
 %
 %   fig = contrastBO.plotSteps(trialParams, respCode, houseLeft, cfg, xFinal)
 %
+% Colour code of the responses (all panels): green dot = house reported,
+% purple dot = face reported, red x = mixed ("none"); in the texture panel the
+% responses are shown as a strip at the bottom.
+%
 % Panels (x axis = trial):
-%   1  g  overall contrast level (log scale); red x = trials with a mixed ("none") response
+%   1  g  overall contrast level (log scale)
 %   2  s  ln(house contrast / face contrast): 0 = equal, > 0 house higher
 %   3  e  ln(left-eye contrast / right-eye contrast): 0 = equal, > 0 left higher
 %   4     resulting contrast of the four textures that were shown (dashed = final estimate)
@@ -45,6 +49,7 @@ blue  = [0.00 0.45 0.70];
 dark  = [0.85 0.33 0.10];
 grey  = [0.55 0.55 0.55];
 red   = [0.80 0.10 0.10];
+colHouse = [0.00 0.62 0.45];   colFace = [0.60 0.25 0.70];   % response colours
 
 fig = figure('Name', 'Adaptive contrast run', 'Color', 'w', ...
     'Visible', visible, 'Position', [100 60 900 900]);
@@ -64,21 +69,14 @@ for p = 1:3
     plot([0 n+1], [limits(1,p) limits(1,p)], ':', 'Color', grey);
     plot([0 n+1], [limits(2,p) limits(2,p)], ':', 'Color', grey);
     if p > 1, plot([0 n+1], [0 0], '-', 'Color', [0.85 0.85 0.85]); end
-    h1 = plot(trials, trialParams(:, p), '-o', 'Color', blue, 'LineWidth', 0.5, ...
-        'MarkerSize', 4, 'MarkerFaceColor', blue);
+    h1 = plot(trials, trialParams(:, p), '-', 'Color', [0.70 0.78 0.88], 'LineWidth', 0.5);
+    hr = plotResp(trials, trialParams(:, p), respCode(:), colHouse, colFace, red, 'o', 4);
     h2 = plot(trials, best(:, p), '-', 'Color', dark, 'LineWidth', 2);
     h3 = plot([0 n+1], [xFinal(p) xFinal(p)], '--', 'Color', dark, 'LineWidth', 1);
     if p == 1
-        isMixed = respCode == -1;
-        h4 = plot(trials(isMixed), trialParams(isMixed, 1), 'x', 'Color', red, ...
-            'MarkerSize', 8, 'LineWidth', 1.5);
-        if any(isMixed)
-            hl = [h1 h2 h3 h4];
-            ll = {'tested in trial', 'best estimate so far', 'final estimate', 'mixed (none)'};
-        else
-            hl = [h1 h2 h3];
-            ll = {'tested in trial', 'best estimate so far', 'final estimate'};
-        end
+        [hl, ll] = respLegend(hr, {'house reported', 'face reported', 'mixed (none)'});
+        hl = [h1 hl h2 h3];
+        ll = [{'tested in trial'} ll {'best estimate so far', 'final estimate'}];
         placeLegend(hl, ll, legPos(1));
     end
     xlim([0 n+1]);
@@ -107,6 +105,7 @@ for j = 1:4
 end
 plot([0 n+1], [cfg.cMin cfg.cMin], ':', 'Color', grey);
 plot([0 n+1], [cfg.cMax cfg.cMax], ':', 'Color', grey);
+plotResp(trials, 0.07 * cfg.cMax * ones(n, 1), respCode(:), colHouse, colFace, red, 'o', 4);   % response strip
 placeLegend(hh, labs, legPos(4));
 xlim([0 n+1]);
 ylim([0, cfg.cMax * 1.05]);
@@ -117,10 +116,34 @@ drawnow;
 end
 
 
+function h = plotResp(t, y, resp, cHouse, cFace, cMix, mk, ms)
+% responses as markers: house = filled dot, face = filled dot (other colour),
+% mixed = x.  Returns a 1x3 cell {house, face, mixed} of handles ([] if none).
+h = cell(1, 3);
+t = t(:);  y = y(:);  resp = resp(:);
+k = resp == 1;
+if any(k), h{1} = plot(t(k), y(k), mk, 'Color', cHouse, 'MarkerSize', ms, 'MarkerFaceColor', cHouse); end
+k = resp == 0;
+if any(k), h{2} = plot(t(k), y(k), mk, 'Color', cFace, 'MarkerSize', ms, 'MarkerFaceColor', cFace); end
+k = resp < 0;
+if any(k), h{3} = plot(t(k), y(k), 'x', 'Color', cMix, 'MarkerSize', 8, 'LineWidth', 1.5); end
+end
+
+
+function [hl, ll] = respLegend(h, labels)
+% legend entries of the response markers that occur
+hl = [];  ll = {};
+for q = 1:numel(h)
+    if ~isempty(h{q}), hl(end+1) = h{q}; ll{end+1} = labels{q}; end %#ok<AGROW>
+end
+end
+
+
 function placeLegend(handles, labels, pos)
 % legend at a fixed position in the right margin (falls back to 'best')
 try
-    legend(handles, labels, 'Position', pos);
+    lg = legend(handles, labels, 'Position', pos);
+    try, set(lg, 'FontSize', 8); catch, end
 catch
     legend(handles, labels, 'Location', 'best');
 end
@@ -150,6 +173,7 @@ end
 
 colA = [0.00 0.45 0.70];   colB = [0.85 0.33 0.10];
 grey = [0.55 0.55 0.55];   red  = [0.80 0.10 0.10];
+colHouse = [0.00 0.62 0.45];   colFace = [0.60 0.25 0.70];   % response colours
 
 fig = figure('Name', 'Adaptive contrast run (per configuration)', 'Color', 'w', ...
     'Visible', visible, 'Position', [100 60 900 900]);
@@ -170,18 +194,21 @@ lims   = {[log(cfg.cMin) log(cfg.cMax)], [-dMax dMax]};
 for p = 1:2
     ax = axes('Position', [axLeft, axBottom(p), axW, axH]);  hold on;
     if p == 2, plot([0 n+1], [0 0], '-', 'Color', [0.85 0.85 0.85]); end
-    h1 = plot(trials(isA), vals{p}(isA), 'o', 'Color', colA, 'MarkerSize', 4, 'MarkerFaceColor', colA);
-    h2 = plot(trials(isB), vals{p}(isB), 'd', 'Color', colB, 'MarkerSize', 4, 'MarkerFaceColor', colB);
     h3 = plot(trials, bestA{p}, '-', 'Color', colA, 'LineWidth', 2);
     h4 = plot(trials, bestB{p}, '-', 'Color', colB, 'LineWidth', 2);
     plot([0 n+1], [finA(p) finA(p)], '--', 'Color', colA);
     plot([0 n+1], [finB(p) finB(p)], '--', 'Color', colB);
-    isMixed = respCode(:) == -1;
-    h5 = plot(trials(isMixed), vals{p}(isMixed), 'x', 'Color', red, 'MarkerSize', 8, 'LineWidth', 1.5);
+    resp = respCode(:);
+    hrA = plotResp(trials(isA), vals{p}(isA), resp(isA), colHouse, colFace, red, 'o', 4);
+    hrB = plotResp(trials(isB), vals{p}(isB), resp(isB), colHouse, colFace, red, 'd', 4);
     if p == 1
-        hl = [h1 h2 h3 h4];
-        ll = {'pair A tested', 'pair B tested', 'best A so far', 'best B so far'};
-        if any(isMixed), hl(end+1) = h5; ll{end+1} = 'mixed (none)'; end
+        hr = hrA;
+        for q = 1:3, if isempty(hr{q}), hr{q} = hrB{q}; end, end
+        [hl, ll] = respLegend(hr, {'house reported', 'face reported', 'mixed (none)'});
+        hA = plot(NaN, NaN, 'o', 'Color', grey, 'MarkerSize', 4);
+        hB = plot(NaN, NaN, 'd', 'Color', grey, 'MarkerSize', 4);
+        hl = [hl hA hB h3 h4];
+        ll = [ll {'circle = pair A', 'diamond = pair B', 'best A so far', 'best B so far'}];
         placeLegend(hl, ll, legPos(1));
         title(ax, sprintf('Contrast steps during the adaptive run (%d trials); A = house left + face right, B = house right + face left', n), 'FontSize', 9);
     end
@@ -213,6 +240,7 @@ for j = 1:4
 end
 plot([0 n+1], [cfg.cMin cfg.cMin], ':', 'Color', grey);
 plot([0 n+1], [cfg.cMax cfg.cMax], ':', 'Color', grey);
+plotResp(trials, 0.07 * cfg.cMax * ones(n, 1), respCode(:), colHouse, colFace, red, 'o', 4);   % response strip
 placeLegend(hh, labs, legPos(3));
 xlim([0 n+1]);  ylim([0, cfg.cMax * 1.05]);
 xlabel('trial');  ylabel('texture contrast (shown)');

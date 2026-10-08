@@ -1,4 +1,4 @@
-function imagesNoReport(ptb, design, leftImageTex, rightImageTex, selectedPair, dotTransparency)
+function imagesNoReport(ptb, design, leftImageTex, rightImageTex, selectedPair, fixTexL, fixTexR,dotTransparency)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Draws background textures, images and each one fixation
 % dot onto both buffers of a stereo display.
@@ -55,7 +55,7 @@ Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
 % Fixation-dot (+frame)
 for pairIdx = 1:nPairs
     leftDotPos = selectedPair(pairIdx, 1);
-    Screen('DrawTexture', ptb.window,design.fixDotTexture, [],design.fixDotTextureRects(:, leftDotPos), [], [], dotTransparency);
+    Screen('DrawTexture', ptb.window,fixTexL, [],design.fixDotTextureRects(:, leftDotPos), [], [], dotTransparency);
 end
 % for synchronization; only if shutterglasses are used
 if ptb.usedatapixx
@@ -77,7 +77,7 @@ Screen('DrawLines',ptb.window,design.fixCrossCoords, ...
 % Fixation-dot (+frame)
 for pairIdx = 1:nPairs
     rightDotPos = selectedPair(pairIdx, 2);
-    Screen('DrawTexture',ptb.window,design.fixDotTexture,[],design.fixDotTextureRects(:, rightDotPos),[],[],dotTransparency);
+    Screen('DrawTexture',ptb.window,fixTexR,[],design.fixDotTextureRects(:, rightDotPos),[],[],dotTransparency);
 end
 if ptb.usedatapixx
     Screen('FillRect', ptb.window, [0, 0, 255], design.blueRectRightOn);

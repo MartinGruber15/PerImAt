@@ -88,7 +88,7 @@ for trial = 1:rows
     if log.reportCond == reportCondition.report
         draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage);
     else
-        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, design.fixDotTransparency);
+        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, trialStim.fixDotTexLeft,trialStim.fixDotTexRight, design.fixDotTransparency);
     end
     stimOnset = Screen('Flip', ptb.window, taskEnd);
     stimOffset = stimOnset + design.stimulusPresentationTime;
@@ -249,6 +249,8 @@ if reportCond == reportCondition.noReport
                 selectedPair(2), selectedPair(2)];
         end
     end
+    fixDotTexL = design.fixDotTexture.(eyeSpecificName(leftImgName,  'L')); %TODO crashes on houseface in dual? ->need houseface and other one for both sides each
+    fixDotTexR = design.fixDotTexture.(eyeSpecificName(rightImgName,  'R'));
 end
 
 %% Load the respective images
@@ -272,7 +274,9 @@ trialStim = struct( ...
     "rightImage", rightImage, ...
     "taskImg", taskImg, ...
     "cueTxt", cueTxt, ...
-    "fixCrossColor", fixCrossColor);
+    "fixCrossColor", fixCrossColor, ...
+    "fixDotTexLeft", fixDotTexL, ...
+    "fixDotTexRight", fixDotTexR);
 if reportCond == reportCondition.noReport; trialStim.selectedPair = selectedPair;end
 end
 

@@ -1,6 +1,9 @@
 function texture = createFixDotTexture( ...
-    ptb, frameSize, dotSize, frameColor, frameLineWidth, dotColor)
+    ptb, frameSize, dotSize, frameColor, frameLineWidth, dotColor,contrast)
 
+if nargin < 7
+    contrast = 1;
+end
 % RGB image
 image = zeros(frameSize, frameSize, 3, 'uint8');
 center = (frameSize + 1) / 2;
@@ -12,12 +15,16 @@ for c = 1:3
 end
 
 %% Fixation dot
+dotColorContrast = frameColor + contrast .* (dotColor - frameColor);
+dotColorContrast = min(max(dotColorContrast, 0), 1);
+dotColor255 = uint8(round(dotColorContrast * 255));
+
 [X, Y] = meshgrid(1:frameSize, 1:frameSize);
 dotMask = ...
     (X - center).^2 + ...
     (Y - center).^2 <= (dotSize/2)^2;
 
-dotColor255 = uint8(round(dotColor));
+%dotColor255 = uint8(round(dotColor));
 for c = 1:3
     channel = image(:,:,c);
     channel(dotMask) = dotColor255(c);

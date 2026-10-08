@@ -85,7 +85,7 @@ for trial = 1:rows
     if log.reportCond == reportCondition.report
         draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage);
     else
-        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, design.fixDotTransparency);
+        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, trialStim.fixDotTexLeft,trialStim.fixDotTexRight, design.fixDotTransparency);
     end
     stimOnset = Screen('Flip', ptb.window, taskEnd);
     stimOffset = stimOnset + design.stimulusPresentationTime;
@@ -235,13 +235,15 @@ if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.du
                 selectedPair(2), selectedPair(2)];
         end
     end
+    fixDotTexL = design.fixDotTexture.(eyeSpecificName(leftImgName,  'L')); %TODO crashes on houseface in dual? ->need houseface and other one for both sides each
+    fixDotTexR = design.fixDotTexture.(eyeSpecificName(rightImgName,  'R'));
 end
 
 %% Load the respective images
 % eye-specific textures (houseL/houseR/faceL/faceR); stimuli without eye-specific
 % version (e.g. catch images houseFace/faceHouse) fall back to the plain name
-leftImgName  = eyeSpecificName(design, leftImgName,  'L');
-rightImgName = eyeSpecificName(design, rightImgName, 'R');
+leftImgName  = eyeSpecificName(leftImgName,  'L');
+rightImgName = eyeSpecificName(rightImgName, 'R');
 leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design);
 rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
 
@@ -259,15 +261,14 @@ trialStim = struct( ...
     "taskImg", taskImg, ...
     "cueTxt", cueTxt, ...
     "finalQText", finalQuestion,...
-    "fixCrossColor", fixCrossColor);
+    "fixCrossColor", fixCrossColor, ...
+    "fixDotTexLeft", fixDotTexL, ...
+    "fixDotTexRight", fixDotTexR);
 if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual); trialStim.selectedPair = selectedPair;end
 end
 
-function name = eyeSpecificName(design, stimName, eyeSuffix)
-% Returns e.g. 'houseL' for ('house','L') if that texture exists, else the plain name
+function name = eyeSpecificName(stimName, eyeSuffix)
+% Returns e.g. 'houseL' for ('house','L')
 name = char(stimName) + string(eyeSuffix);
 name = char(name);
-if ~isfield(design.images, name)
-    name = char(stimName);
-end
 end

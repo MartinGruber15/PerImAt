@@ -9,7 +9,6 @@ if isempty(files)
     stimuliParameters.faceContrast  = 1;
     stimuliParameters.leftEyeContrast  = 1;
     stimuliParameters.rightEyeContrast = 1;
-    stimuliParameters.configContrast   = 1;
     fprintf('\nNo previous training parameters found.\n');
     fprintf('Using default stimulus parameters.\n');
     return;
@@ -27,18 +26,25 @@ stimuliParameters = loaded.stimuliParameters;
 % Files saved before eye-specific contrast existed: neutral default
 if ~isfield(stimuliParameters,'leftEyeContrast');  stimuliParameters.leftEyeContrast  = 1; end
 if ~isfield(stimuliParameters,'rightEyeContrast'); stimuliParameters.rightEyeContrast = 1; end
-if ~isfield(stimuliParameters,'configContrast');    stimuliParameters.configContrast    = 1; end
+% Files saved while a configuration contrast existed: that field is no longer used
+if isfield(stimuliParameters,'configContrast')
+    if abs(stimuliParameters.configContrast - 1) > 0.005
+        fprintf(2, 'NOTE: this training file contains configContrast = %.4f; it is no longer used and is ignored.\n', stimuliParameters.configContrast);
+    end
+    stimuliParameters = rmfield(stimuliParameters, 'configContrast');
+end
 fprintf('\nLoaded training parameters from:\n%s\n',latestFile);
 fprintf('\n---------------------------------------------\n');
 fprintf('Selected parameters:\n');
-fprintf('\nStimuli\n')
-fprintf('  House contrast:  %.4f\n',stimuliParameters.houseContrast);
-fprintf('  Face contrast:  %.4f\n',stimuliParameters.faceContrast);
+fprintf('\nHouse:\n');
+fprintf('  Luminance: %.4f\n',stimuliParameters.houseLuminance);
+fprintf('  Contrast:  %.4f\n',stimuliParameters.houseContrast);
+fprintf('\nFace:\n');
+fprintf('  Luminance: %.4f\n',stimuliParameters.faceLuminance);
+fprintf('  Contrast:  %.4f\n',stimuliParameters.faceContrast);
 fprintf('\nEye (multiplied onto stimulus contrast):\n');
 fprintf('  Left eye contrast:  %.4f\n',stimuliParameters.leftEyeContrast);
 fprintf('  Right eye contrast: %.4f\n',stimuliParameters.rightEyeContrast);
-fprintf('\nConfiguration (x for house-left/face-right, / for house-right/face-left):\n');
-fprintf('  Configuration contrast: %.4f\n',stimuliParameters.configContrast);
 fprintf('---------------------------------------------\n');
 end
 

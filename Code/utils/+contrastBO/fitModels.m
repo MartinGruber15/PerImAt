@@ -1,32 +1,31 @@
-function model = fitModels(X, houseLeft, resp, cfg)
+function model = fitModels(logContrastShown, houseLeft, report, cfg)
 % fitModels  Update the two Bayesian models with all trials so far.
 %
-%   X          n x 3   contrasts [g s e] shown in each trial
-%   houseLeft  n x 1   true if the house was shown to the left eye
-%   resp       n x 1   1 = house reported, 0 = face reported, -1 = mixed/none
+%   logContrastShown  n x 3   [logLevel logHouseFace logLeftRight] shown in each trial
+%   houseLeft         n x 1   true if the house was shown to the left eye
+%   report            n x 1   1 = house reported, 0 = face reported, -1 = mixed/none
 %
-% model.stim : posterior of the house-vs-face model (answered trials only)
-% model.mix  : posterior of the mixed-percept model (all trials)
+% model.stim : posterior of the house-vs-face / left-vs-right model
+%              (.params = [stimBias stimSlope eyeBias eyeSlope], .paramCov).
+%              Only ANSWERED trials enter it; mixed trials carry no information
+%              about which stimulus is stronger.
+% model.mix  : posterior of the mixed-percept rate (all trials), one constant
+%              logit (.mixedLogit, .mixedLogitVar).  It is only reported, it
+%              never changes the contrasts.
 
-if isfield(cfg, 'mode') && strcmpi(cfg.mode, 'perConfig')
-    model = contrastBO.fitModelsCfg(X, houseLeft, resp, cfg);   % per-pair model
-    return
-end
-
-n = size(X, 1);
+n = size(logContrastShown, 1);
 if n == 0
-    X = zeros(0, 3);  houseLeft = false(0, 1);  resp = zeros(0, 1);
+    logContrastShown = zeros(0, 3);  houseLeft = false(0, 1);  report = zeros(0, 1);
 end
-resp = resp(:);
-isAnswered = resp >= 0;
+report = report(:);
+isAnswered = report >= 0;
 
-Phi = contrastBO.stimFeatures(X(isAnswered, :), houseLeft(isAnswered), cfg);
-[model.stim.theta, model.stim.Sigma] = contrastBO.fitLogistic( ...
-    Phi, resp(isAnswered), cfg.stimPriorMean, cfg.stimPriorSD);
+designMatrix = contrastBO.stimFeatures(logContrastShown(isAnswered, :), houseLeft(isAnswered), cfg);
+[model.stim.params, model.stim.paramCov] = contrastBO.fitLogistic( ...
+    designMatrix, report(isAnswered), cfg.paramPriorMean, cfg.paramPriorSD);
 
-Psi = contrastBO.mixFeatures(X(:, 1), cfg);
-[model.mix.theta, model.mix.Sigma] = contrastBO.fitLogistic( ...
-    Psi, double(resp < 0), cfg.mixPriorMean, cfg.mixPriorSD);
+[model.mix.mixedLogit, model.mix.mixedLogitVar] = contrastBO.fitLogistic( ...
+    ones(n, 1), double(report < 0), cfg.mixedPriorMean, cfg.mixedPriorSD);
 
 model.nTrials   = n;
 model.nAnswered = sum(isAnswered);

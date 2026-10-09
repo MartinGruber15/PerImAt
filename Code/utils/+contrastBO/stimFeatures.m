@@ -1,13 +1,13 @@
-function Phi = stimFeatures(X, houseLeft, cfg)
+function designMatrix = stimFeatures(logContrastShown, houseLeft, cfg)
 % stimFeatures  Design matrix of the house-vs-face model, one row per trial.
-%   X          n x 3   [g s e] of each trial
-%   houseLeft  n x 1   true if the house was shown to the left eye
-% Columns match cfg.stimPriorMean = [a0 a1 a3 b0 b1 b3].
+%   logContrastShown  n x 3   [logLevel logHouseFace logLeftRight] of each trial
+%   houseLeft         n x 1   true if the house was shown to the left eye
+% Columns match cfg.paramPriorMean = [stimBias stimSlope eyeBias eyeSlope]:
+%   [1,  logHouseFace - startHouseFace,  houseSide,  houseSide * (logLeftRight - startLeftRight)]
 
-n  = size(X, 1);
-t  = 2 * double(houseLeft(:)) - 1;          % +1 house left, -1 house right
-dg = X(:, 1) - cfg.center(1);
-ds = X(:, 2) - cfg.center(2);
-de = X(:, 3) - cfg.center(3);
-Phi = [ones(n, 1), ds, dg, t, t .* de, t .* dg];
+n = size(logContrastShown, 1);
+houseSide = 2 * double(houseLeft(:)) - 1;                       % +1 house left, -1 house right
+dHouseFace = logContrastShown(:, 2) - cfg.startLog(2);
+dLeftRight = logContrastShown(:, 3) - cfg.startLog(3);
+designMatrix = [ones(n, 1), dHouseFace, houseSide, houseSide .* dLeftRight];
 end

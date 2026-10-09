@@ -56,10 +56,6 @@ while adaptParameters
     stimuliParameters.leftEyeContrast  = inputWithDefault('Left eye contrast',stimuliParameters.leftEyeContrast);
     stimuliParameters.rightEyeContrast = inputWithDefault('Right eye contrast',stimuliParameters.rightEyeContrast);
 
-    % Configuration contrast: multiplies the contrast of house-left + face-right
-    % and divides that of house-right + face-left (1 = no difference)
-    fprintf('\nConfiguration contrast (>1 strengthens house-left/face-right, weakens house-right/face-left):\n');
-    stimuliParameters.configContrast = inputWithDefault('Configuration contrast',stimuliParameters.configContrast);
 
     %% Display selected parameters
     fprintf('\n---------------------------------------------\n');

@@ -1,130 +1,89 @@
-function x = chooseParams(model, cfg, mode)
-% chooseParams  Contrasts [g s e] to use next, or the current best estimate.
+function [logContrast, info] = chooseParams(model, cfg, mode)
+% chooseParams  Contrasts [logLevel logHouseFace logLeftRight] to use next, or
+%               the current best estimate.
 %
-%   x = contrastBO.chooseParams(model, cfg, 'sample')   next trial (Thompson sampling)
-%   x = contrastBO.chooseParams(model, cfg, 'map')      current best estimate
+%   logContrast = contrastBO.chooseParams(model, cfg, 'sample')   next trial (Thompson sampling)
+%   logContrast = contrastBO.chooseParams(model, cfg, 'map')      current best estimate
+%   [logContrast, info] = contrastBO.chooseParams(...)            also says whether it had to be shrunk
 %
-% 'sample': draw ONE plausible parameter set from each model's posterior and
-%   return the optimum of that draw.  While the posterior is wide, draws
-%   differ a lot, so many different contrasts get tested (exploration); as
-%   data accumulate, draws agree and the trials concentrate around the
-%   optimum (exploitation).
+% 'sample': draw ONE plausible parameter set from the posterior and return its
+%   balance point.  While the posterior is wide, draws differ a lot, so many
+%   different contrasts get tested (exploration); as data accumulate, draws
+%   agree and the trials concentrate around the balance point (exploitation).
 % 'map': use the most probable parameters instead of a random draw.
 %
-% The optimum of a parameter set is
-%   - s, e : the values at which house/face and left/right are equally
-%            likely to be reported (logit = 0)
-%   - g    : depends on cfg.levelMode: 'mixed' = level with the lowest mixed-
-%            percept probability among those that keep all four contrasts within
-%            cMin..cMax; 'balance' = level needing the smallest differences
-%            (mixed percepts ignored); 'fixed' = start level.
-
-if isfield(cfg, 'mode') && strcmpi(cfg.mode, 'perConfig')
-    x = contrastBO.chooseParamsCfg(model, cfg, mode);          % per-pair model
-    return
-end
+% The balance point of a parameter set: logLevel stays at its start value;
+% logHouseFace and logLeftRight are the values at which house/face and
+% left/right are equally likely to be reported (logit = 0):
+%   balanceHouseFace = startHouseFace - stimBias / stimSlope
+%   balanceLeftRight = startLeftRight - eyeBias  / eyeSlope
+% If the start level leaves too little room, both are shrunk by the same factor
+% so that all four textures stay within cMin..cMax; the balance point is then
+% only approximated.
+%
+% info.shrunk   true if the two ratios had to be shrunk
+% info.factor   the factor they were multiplied with (1 = not shrunk)
+% info.wanted   [balanceHouseFace balanceLeftRight] asked for (before shrinking)
+% info.used     [logHouseFace logLeftRight] returned
+% info.needSum  |logHouseFace|+|logLeftRight| asked for
+% info.roomSum  |logHouseFace|+|logLeftRight| that fits into cMin..cMax
+% info.limit    'cMax' or 'cMin': which end of the range is reached first
+% info.clipped  true if a balance point hit the maximum ratio cfg.maxLogRatio
 
 if strcmpi(mode, 'sample')
-    thS = drawStim(model.stim, cfg);
-    thM = drawGaussian(model.mix.theta, model.mix.Sigma);
+    params = drawParams(model.stim, cfg);
 else
-    thS = model.stim.theta(:);
-    thS([2 5]) = max(thS([2 5]), cfg.minSlope);
-    thM = model.mix.theta(:);
+    params = model.stim.params(:);
+    params([2 4]) = max(params([2 4]), cfg.minSlope);
 end
-x = optimumFor(thS, thM, cfg);
+[logContrast, info] = balancePoint(params, cfg);
 end
 
 
 %% ------------------------------------------------------------------------
-function th = drawStim(post, cfg)
+function params = drawParams(post, cfg)
 % posterior draw, re-drawn while a contrast slope is implausibly small
 for attempt = 1:100
-    th = drawGaussian(post.theta, post.Sigma);
-    if th(2) >= cfg.minSlope && th(5) >= cfg.minSlope, return; end
+    params = drawGaussian(post.params, post.paramCov);
+    if params(2) >= cfg.minSlope && params(4) >= cfg.minSlope, return; end
 end
-th([2 5]) = max(th([2 5]), cfg.minSlope);
+params([2 4]) = max(params([2 4]), cfg.minSlope);
 end
 
-function th = drawGaussian(mu, Sigma)
+function draw = drawGaussian(mu, covariance)
 mu = mu(:);
-[R, p] = chol(Sigma + 1e-9 * eye(numel(mu)), 'lower');
-if p > 0
-    R = diag(sqrt(max(diag(Sigma), 1e-9)));
+[cholFactor, notPosDef] = chol(covariance + 1e-9 * eye(numel(mu)), 'lower');
+if notPosDef > 0
+    cholFactor = diag(sqrt(max(diag(covariance), 1e-9)));
 end
-th = mu + R * randn(numel(mu), 1);
-end
-
-function x = optimumFor(thS, thM, cfg)
-gGrid = linspace(cfg.lo(1), cfg.hi(1), 61)';
-mixLogit = contrastBO.mixFeatures(gGrid, cfg) * thM(:);
-lvl = 'mixed';
-if isfield(cfg, 'levelMode'), lvl = cfg.levelMode; end
-
-switch lvl
-    case 'fixed'
-        g = cfg.center(1);
-        [s, e] = balancePoint(thS, g, cfg);
-        % keep all four textures inside cMin..cMax at this level
-        room = min(g - log(cfg.cMin), log(cfg.cMax) - g);
-        need = (abs(s) + abs(e)) / 2;
-        if need > room
-            f = max(room, 0) / need;  s = s * f;  e = e * f;
-        end
-        x = [g s e];
-        return
-    case 'balance'
-        % level where the differences needed for balance are smallest (mixed ignored)
-        cost = zeros(size(gGrid));
-        for k = 1:numel(gGrid)
-            [sk, ek] = balancePoint(thS, gGrid(k), cfg);
-            half = (abs(sk) + abs(ek)) / 2;
-            cost(k) = abs(sk) + abs(ek) + 1e3 * (gGrid(k) + half > log(cfg.cMax) + 1e-9 ...
-                | gGrid(k) - half < log(cfg.cMin) - 1e-9) + 1e-3 * abs(gGrid(k) - cfg.center(1));
-        end
-        [~, i] = min(cost);
-        g = gGrid(i);
-    otherwise
-        % overall level: lowest mixed probability that keeps all contrasts in range
-        [~, i] = min(mixLogit);
-        g = gGrid(i);
-        for it = 1:4
-            [s, e] = balancePoint(thS, g, cfg);
-            half = (abs(s) + abs(e)) / 2;
-            ok = (gGrid + half <= log(cfg.cMax) + 1e-9) & (gGrid - half >= log(cfg.cMin) - 1e-9);
-            if any(ok)
-                idx = find(ok);
-                [~, j] = min(mixLogit(idx));
-                g = gGrid(idx(j));
-            else
-                % ratios too large for the allowed range: shrink them, centre g
-                g = cfg.gMid;
-                f = cfg.gHalf / half;
-                s = s * f;  e = e * f;
-                x = [g s e];
-                return
-            end
-        end
-end
-[s, e] = balancePoint(thS, g, cfg);
-% keep all four textures inside cMin..cMax (g is shifted if the final s, e need more room)
-half = (abs(s) + abs(e)) / 2;
-gLo = log(cfg.cMin) + half;  gHi = log(cfg.cMax) - half;
-if gLo > gHi
-    f = cfg.gHalf / half;
-    s = s * f;  e = e * f;
-    g = cfg.gMid;
-else
-    g = min(max(g, gLo), gHi);
-end
-x = [g s e];
+draw = mu + cholFactor * randn(numel(mu), 1);
 end
 
-function [s, e] = balancePoint(th, g, cfg)
-% where the house/face and left/right logits are zero, at overall level g
-dg = g - cfg.center(1);
-s = cfg.center(2) - (th(1) + th(3) * dg) / th(2);
-e = cfg.center(3) - (th(4) + th(6) * dg) / th(5);
-s = min(max(s, cfg.lo(2)), cfg.hi(2));
-e = min(max(e, cfg.lo(3)), cfg.hi(3));
+function [logContrast, info] = balancePoint(params, cfg)
+logLevel = cfg.startLog(1);
+% where the house/face and left/right logits are zero
+balanceHouseFaceRaw = cfg.startLog(2) - params(1) / params(2);
+balanceLeftRightRaw = cfg.startLog(3) - params(3) / params(4);
+logHouseFace = min(max(balanceHouseFaceRaw, cfg.logMin(2)), cfg.logMax(2));
+logLeftRight = min(max(balanceLeftRightRaw, cfg.logMin(3)), cfg.logMax(3));
+info.clipped = (logHouseFace ~= balanceHouseFaceRaw) || (logLeftRight ~= balanceLeftRightRaw);
+info.wanted  = [logHouseFace logLeftRight];
+
+% keep all four textures inside cMin..cMax at this level:
+% largest texture = exp(logLevel + (|logHouseFace|+|logLeftRight|)/2),
+% smallest        = exp(logLevel - (|logHouseFace|+|logLeftRight|)/2)
+roomUp   = log(cfg.cMax) - logLevel;
+roomDown = logLevel - log(cfg.cMin);
+room = max(min(roomUp, roomDown), 0);
+need = (abs(logHouseFace) + abs(logLeftRight)) / 2;
+info.needSum = 2 * need;  info.roomSum = 2 * room;
+if roomUp <= roomDown, info.limit = 'cMax'; else, info.limit = 'cMin'; end
+info.factor = 1;  info.shrunk = false;
+if need > room + 1e-9
+    factor = room / need;
+    logHouseFace = logHouseFace * factor;  logLeftRight = logLeftRight * factor;
+    info.factor = factor;  info.shrunk = true;
+end
+info.used = [logHouseFace logLeftRight];
+logContrast = [logLevel logHouseFace logLeftRight];
 end

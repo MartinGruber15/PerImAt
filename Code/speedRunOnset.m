@@ -152,6 +152,8 @@ for trial = 1:nTrials
         stimuli = [houseTex, faceTex];
         houseEye{trial} = 'left';
         faceEye{trial}  = 'right';
+        fixDotTexLeft = design.fixDotTexture.houseL;
+        fixDotTexRight = design.fixDotTexture.faceR;
         shownContrast(trial,:) = [c.houseLeft, c.faceRight];
     else
         faceImg  = generate.adaptImage(rawFace,  stimuliParameters.faceLuminance,  c.faceLeft);
@@ -161,11 +163,13 @@ for trial = 1:nTrials
         stimuli = [faceTex, houseTex];
         houseEye{trial} = 'right';
         faceEye{trial}  = 'left';
+        fixDotTexLeft = design.fixDotTexture.faceL;
+        fixDotTexRight = design.fixDotTexture.houseR;
         shownContrast(trial,:) = [c.houseRight, c.faceLeft];
     end
     pairIndex = randi(size(design.fixDotValidPairs, 1));
     selectedPair = design.fixDotValidPairs(pairIndex, :);
-    draw.stereo.images(ptb,design,stimuli(1),stimuli(2));
+    draw.stereo.imagesNoReport(ptb,design,stimuli(1),stimuli(2),selectedPair, fixDotTexLeft,fixDotTexRight, design.fixDotTransparency);
     fliptime = Screen('Flip',ptb.window,trialStart+2);
 
     % Start listening for a response as soon as the stimulus is on screen.

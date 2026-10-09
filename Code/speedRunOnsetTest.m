@@ -1,4 +1,4 @@
-function participantInfo = speedRunOnsetTest(log, ptb, design, participantInfo, myPaths)
+function speedRunOnsetTest(log, ptb, design, participantInfo, myPaths)
 % speedRunOnsetTest  Onset-rivalry test run with FIXED contrasts.
 %
 % Same trial procedure as speedRunOnset, but nothing is adapted: the four
@@ -11,13 +11,13 @@ function participantInfo = speedRunOnsetTest(log, ptb, design, participantInfo, 
 % <sub>_onsetTest_<timestamp>.mat in the subject directory.
 
 %% Settings
-nTrials     = 40;    % total trials (~5.5 s each)
+nTrials     = 60;    % total trials (~5.5 s each)
 reportEvery = 10;    % print running proportions every N trials (0 = never)
 
 %% Timing
 design.instructionWaitDuration  = 0.5;
-stimulusPresentationTime = 1.5 - ptb.ifi/2; % 1
-ITI                      = 2 - ptb.ifi/2; % 5
+stimulusPresentationTime = 1.5 - ptb.ifi/2;   % seconds the stimulus is shown
+ITI                      = 2 - ptb.ifi/2;   % seconds of noise mask after the stimulus
 
 %% Contrasts: latest training file (printed by loadLatestTrainingParameters)
 stimuliParameters = loadLatestTrainingParameters(myPaths.subjectDirectory);
@@ -56,6 +56,11 @@ display.stereo.alignFusion(ptb, participantInfo);
 % Set up keyboard queue for collecting house/face responses.
 KbQueueCreate;
 
+%% Timing record
+fprintf('Pause: noise mask %.1f s, plus 2 s grey before every stimulus.\n', ITI + ptb.ifi/2);
+stimOnsetTime  = nan(nTrials,1);   % time at which the stimulus appeared in each trial
+stimOffsetTime = nan(nTrials,1);   % time at which it was replaced by the noise mask
+
 grey = design.stimuli.grey_square;
 trialStart = GetSecs();
 for trial = 1:nTrials
@@ -82,6 +87,8 @@ for trial = 1:nTrials
     [leftNoise, rightNoise] =generate.createStereoGaussianNoiseTextures(ptb, design);
     draw.stereo.textures(ptb, design, leftNoise, rightNoise);
     ITIOnset = Screen('Flip', ptb.window, fliptime+stimulusPresentationTime);
+    stimOnsetTime(trial)  = fliptime;
+    stimOffsetTime(trial) = ITIOnset;
 
     % Response = whichever key was pressed first
     while true
@@ -148,9 +155,12 @@ fprintf('Mixed ("none") responses: %d of %d trials (%.0f%%)\n', s.nNone, nTrials
 subLabel = log.sub;
 if isnumeric(subLabel); subLabel = num2str(subLabel); end
 subLabel = char(subLabel);
+% pause between the end of the previous stimulus and the start of this one (s)
+pauseBefore = [NaN; stimOnsetTime(2:end) - stimOffsetTime(1:end-1)];
 testResult = struct('contrasts', c, 'stimuliParameters', stimuliParameters, ...
     'houseEye', {houseEye}, 'faceEye', {faceEye}, 'response', {response}, ...
-    'perceivedEye', {perceivedEye}, 'summary', s);
+    'perceivedEye', {perceivedEye}, 'summary', s, ...
+    'pauseBefore', pauseBefore);
 testFile = fullfile(myPaths.subjectDirectory, ...
     sprintf('%s_onsetTest_%s.mat', subLabel, datestr(now,'yyyymmdd_HHMMSS')));
 save(testFile, 'testResult');

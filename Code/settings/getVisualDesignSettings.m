@@ -173,7 +173,7 @@ design.fixCrossColor = ptb.black;
 design.conditionColors = [[0.85 0.05 0.05]; [0.00 0.45 0.55]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
-design.fixDotTransparency       = 0.5; % 0.5
+design.fixDotTransparency       = 0.2; % 0.5
 design.fixDotColor              = [0.45, 0.45, 0.45];
 
 % fixation dot frame(s)
@@ -203,7 +203,6 @@ stimuliParameters = loadLatestTrainingParameters(myPaths.subjectDirectory);
 % houseL/faceL are shown to the left eye, houseR/faceR to the right eye.
 eyeNames     = {'L', 'R'};
 eyeContrasts = [stimuliParameters.leftEyeContrast, stimuliParameters.rightEyeContrast];
-cfgC         = stimuliParameters.configContrast;
 for e = 1:2
     houseName = ['house' eyeNames{e}];
     faceName  = ['face'  eyeNames{e}];
@@ -211,6 +210,7 @@ for e = 1:2
         ptb, ...
         fullfile(myPaths.stimuliLocation, 'house.png'), ...
         design.defaultLuminance, ...
+        stimuliParameters.houseContrast * eyeContrasts(e));
     [design.stimuli.(faceName),design.masks.(faceName),design.images.(faceName)] = createAdaptiveTexture( ...
         ptb, ...
         fullfile(myPaths.stimuliLocation, 'face.png'), ...

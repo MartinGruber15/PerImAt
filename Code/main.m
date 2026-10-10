@@ -1,9 +1,9 @@
 function main(setUp)
 sca;
-%Screen('Preference', 'SkipSyncTests', 1); %TODO
+Screen('Preference', 'SkipSyncTests', 1); %TODO
 Screen('Preference', 'Verbosity', 1);  % Only Errors + warnings
-%opacity = 0.8;
-%PsychDebugWindowConfiguration([], opacity)
+opacity = 0.8;
+PsychDebugWindowConfiguration([], opacity)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
 % Author: Martin Gruber
@@ -66,7 +66,7 @@ participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub
 design = getInstructions(ptb.Keys,design,participantInfo);
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training","onset speedrun"]);
+condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training","onset speedrun","onset test"]);
 log.task = condition;
 
 %% Switch case for different tasks

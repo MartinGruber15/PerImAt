@@ -82,11 +82,7 @@ for trial = 1:rows
         Eyelink('Message', sprintf('TASK_ONSET trial=%d', trial));
     end
     % Draw the BR stimuli
-    if log.reportCond == reportCondition.report
-        draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage);
-    else
-        draw.stereo.imagesNoReport(ptb, design,trialStim.leftImage, trialStim.rightImage,trialStim.selectedPair, trialStim.fixDotTexLeft,trialStim.fixDotTexRight, design.fixDotTransparency);
-    end
+    draw.stereo.images(ptb, design,trialStim.leftImage, trialStim.rightImage);
     stimOnset = Screen('Flip', ptb.window, taskEnd);
     stimOffset = stimOnset + design.stimulusPresentationTime;
     if ptb.useEyetracker
@@ -221,6 +217,9 @@ switch condition
 
 end
 
+leftImgName  = eyeSpecificName(leftImgName,  'L');
+rightImgName = eyeSpecificName(rightImgName, 'R');
+
 if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual)
     % Randomly select one valid pair
     pairIndex = randi(size(design.fixDotValidPairs, 1));
@@ -229,21 +228,24 @@ if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.du
         if strcmp(catchParts(4), 'single')
             % Pick one pair, but use its first position twice
             selectedPair = [selectedPair(1), selectedPair(1)];
+            leftImgName = sprintf('%s_dot_%d',leftImgName, selectedPair(1));
+            rightImgName = sprintf('%s_dot_%d',rightImgName, selectedPair(2));
         else
             % Pick two different pairs
             selectedPair = [selectedPair(1), selectedPair(1);
                 selectedPair(2), selectedPair(2)];
+            leftImgName = sprintf('%s_dots_%d_%d',leftImgName, selectedPair(1,1), selectedPair(2,1));
+            rightImgName = sprintf('%s_dots_%d_%d',rightImgName, selectedPair(1,2), selectedPair(2,2));
         end
+    else
+        leftImgName = sprintf('%s_dot_%d',leftImgName, selectedPair(1));
+        rightImgName = sprintf('%s_dot_%d',rightImgName, selectedPair(2));
     end
-    fixDotTexL = design.fixDotTexture.(eyeSpecificName(leftImgName,  'L')); %TODO crashes on houseface in dual? ->need houseface and other one for both sides each
-    fixDotTexR = design.fixDotTexture.(eyeSpecificName(rightImgName,  'R'));
 end
 
 %% Load the respective images
 % eye-specific textures (houseL/houseR/faceL/faceR); stimuli without eye-specific
 % version (e.g. catch images houseFace/faceHouse) fall back to the plain name
-leftImgName  = eyeSpecificName(leftImgName,  'L');
-rightImgName = eyeSpecificName(rightImgName, 'R');
 leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design);
 rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
 
@@ -261,9 +263,7 @@ trialStim = struct( ...
     "taskImg", taskImg, ...
     "cueTxt", cueTxt, ...
     "finalQText", finalQuestion,...
-    "fixCrossColor", fixCrossColor, ...
-    "fixDotTexLeft", fixDotTexL, ...
-    "fixDotTexRight", fixDotTexR);
+    "fixCrossColor", fixCrossColor);
 if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual); trialStim.selectedPair = selectedPair;end
 end
 

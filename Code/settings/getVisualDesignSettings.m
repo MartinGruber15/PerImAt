@@ -173,12 +173,12 @@ design.fixCrossColor = ptb.black;
 design.conditionColors = [[0.85 0.05 0.05]; [0.00 0.45 0.55]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
-design.fixDotTransparency       = 0.4; % 0.5
-design.fixDotColor              = [0.45, 0.45, 0.45];
+design.fixDotTransparency       = 0.3; % 0.5
+design.fixDotColor              = [0.65, 0.65, 0.65];
 
 % fixation dot frame(s)
 design.fixDotFrameLineWidth = 1;
-design.fixDotFrameColor = [0.65, 0.65, 0.65];
+design.fixDotFrameColor = [0.35, 0.35, 0.35];
 
 %% Additional visual parameters
 % fixation dot(s)/frame(s)
@@ -200,7 +200,7 @@ design.defaultLuminance = 128;
 stimuliParameters = loadLatestTrainingParameters(myPaths.subjectDirectory);
 design = generate.getContrastAdjustedImages(ptb, design, stimuliParameters, myPaths, ...
     design.fixDotTexture, design.fixDotTransparency);
-%save_utils.saveDesignImages(design,fullfile(myPaths.stimuliLocation,'debugImages'))
+save_utils.saveDesignImages(design,fullfile(myPaths.stimuliLocation,'debugImages'))
 design.stimuli.house_low = Screen('MakeTexture', ptb.window, ...
     imread(fullfile(myPaths.stimuliLocation, 'house_low.png')));
 design.stimuli.face_low = Screen('MakeTexture', ptb.window, ...

@@ -126,6 +126,7 @@ for trial = 1:rows
     trialStartTime = ITIOnset + design.ITI;
     
     %% Save stimuli and timing
+    log.data.trial{trial}           = trial;
     log.data.condition{trial}       = condition;
     log.data.rightEye{trial}        = trialStim.rightEyeStim;
     log.data.leftEye{trial}         = trialStim.leftEyeStim;

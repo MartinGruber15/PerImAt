@@ -54,6 +54,7 @@ rows=height(trialSequence);
 rows = 3; %TODO remove
 
 %% Empty cell arrays to save trial information
+log.data.trial                  = zeros(rows,1);
 log.data.condition              = cell(rows,1);
 log.data.leftEye                = cell(rows,1);
 log.data.rightEye               = cell(rows,1);

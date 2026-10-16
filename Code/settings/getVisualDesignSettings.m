@@ -7,7 +7,7 @@ design.centerX = ptb.centerX;
 design.centerY = ptb.centerY;
 
 %% Displayed elements in visual degrees
-design.stimSizeInDegrees        = 3.5;      % stimulus size in visual deg.
+design.stimSizeInDegrees        = 3;      % stimulus size in visual deg.
 design.frameSizeFactor          = 1.3;%1.1  % frame around stimulus
 design.frameApertureFactor      = 2/3;      % circular aperture (=stimulus window)
 design.crossesSizeInDegrees     = 0.5;      % Crosses in the edge of the frame
@@ -15,8 +15,8 @@ design.crossesWidthInDegrees    = 0.08;     % width of crosses in frame edges
 design.crossesInsetInDegrees    = 0.15;     % distance of frame crosses from edges
 design.fusionMaskInDegrees      = 8;        % surrounding fusion-aid frame
 design.fixCrossInDegrees        = 0.2;      % Fixation cross in degrees
-design.fixDotSizeInDegrees      = 0.3;      % Fixation dots for no-report in degrees
-design.fixDotFrameSizeInDegrees = 0.35;%35? % Frame around fixation dot
+design.fixDotSizeInDegrees      = 0.1;      % Fixation dots for no-report in degrees
+design.fixDotFrameSizeInDegrees = 0.2;%35? % Frame around fixation dot
 design.legendPictogramInDegrees = 0.8;      % key assignment legend pictograms
 
 %% Convert visual degrees to pixels
@@ -68,19 +68,22 @@ design.fixCrossCoords = [
 
 % Fixation dot positions and coordinates for no-report BR
 % Distance of fixation dots from the center
-design.fixDotDistanceInPixels = min(design.stimSizeInPixelsX / 2.3,design.stimSizeInPixelsY / 2.3) / 2; % 3 3 2
-d = design.fixDotDistanceInPixels;
+design.fixDotDistanceInPixelsX = (design.stimSizeInPixelsX / 2.3) / 2.4; % 3 3 2
+design.fixDotDistanceInPixelsY = (design.stimSizeInPixelsY / 2.3) / 1.7; % 3 3 2
+
+dx = design.fixDotDistanceInPixelsX;
+dy = design.fixDotDistanceInPixelsY;
 % screen coordinates of the 6 possible positions
 % 1 . 2
 % 6 + 3
 % 5 . 4
 design.fixDotPositions = [
-    design.centerX - d, design.centerY - d;  % 1 = top-left
-    design.centerX + d, design.centerY - d;  % 2 = top-right
-    design.centerX + d, design.centerY;      % 3 = right
-    design.centerX + d, design.centerY + d   % 4 = bottom-right
-    design.centerX - d, design.centerY + d;  % 5 = bottom-left
-    design.centerX - d, design.centerY;      % 6 = left
+    design.centerX - dx, design.centerY - dy;  % 1 = top-left
+    design.centerX + dx, design.centerY - dy;  % 2 = top-right
+    design.centerX + dx, design.centerY;      % 3 = right
+    design.centerX + dx, design.centerY + dy   % 4 = bottom-right
+    design.centerX - dx, design.centerY + dy;  % 5 = bottom-left
+    design.centerX - dx, design.centerY;      % 6 = left
     ];
 design.fixDotValidPairs = [
     1 2
@@ -173,12 +176,13 @@ design.fixCrossColor = ptb.black;
 design.conditionColors = [[0.85 0.05 0.05]; [0.00 0.45 0.55]]; % colors of fix cross used to indicate condition
 
 % fixation dot(s)
-design.fixDotTransparency       = 0.3; % 0.5
-design.fixDotColor              = [0.65, 0.65, 0.65];
+design.fixDotTransparency       = 1; % 0.5
+design.fixDotColor              = [0.6, 0.6, 0.6];
+design.fixDotColorInner              = [0.8, 0.8, 0.8];
 
 % fixation dot frame(s)
 design.fixDotFrameLineWidth = 1;
-design.fixDotFrameColor = [0.35, 0.35, 0.35];
+design.fixDotFrameColor = [0.5, 0.5, 0.5];
 
 %% Additional visual parameters
 % fixation dot(s)/frame(s)
@@ -193,7 +197,8 @@ design.fixDotTexture = generate.createFixDotTexture( ...
     design.fixDotSizeInPixels, ...
     design.fixDotFrameColor, ...
     design.fixDotFrameLineWidth, ...
-    design.fixDotColor);
+    design.fixDotColor, ...
+    design.fixDotColorInner);
 
 % stimuli
 design.defaultLuminance = 128;

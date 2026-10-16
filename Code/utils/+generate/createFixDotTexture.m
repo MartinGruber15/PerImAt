@@ -1,7 +1,7 @@
 function texture = createFixDotTexture( ...
-    ptb, frameSize, dotSize, frameColor, frameLineWidth, dotColor,contrast)
+    ptb, frameSize, dotSize, frameColor, frameLineWidth, dotColor,innerDotColor,contrast)
 
-if nargin < 7
+if nargin < 8
     contrast = 1;
 end
 % RGB image
@@ -18,19 +18,28 @@ end
 dotColorContrast = frameColor + contrast .* (dotColor - frameColor);
 dotColorContrast = min(max(dotColorContrast, 0), 1);
 dotColor255 = uint8(round(dotColorContrast * 255));
+dotColorContrast2 = frameColor + contrast .* (innerDotColor - frameColor);
+dotColorContrast2 = min(max(dotColorContrast2, 0), 1);
+dotColor255_2 = uint8(round(dotColorContrast2 * 255));
 
 [X, Y] = meshgrid(1:frameSize, 1:frameSize);
 dotMask = ...
     (X - center).^2 + ...
     (Y - center).^2 <= (dotSize/2)^2;
-
+dotMask2 = ...
+    (X - center).^2 + ...
+    (Y - center).^2 <= (dotSize/3)^2;
 %dotColor255 = uint8(round(dotColor));
 for c = 1:3
     channel = image(:,:,c);
     channel(dotMask) = dotColor255(c);
     image(:,:,c) = channel;
 end
-
+for c = 1:3
+    channel = image(:,:,c);
+    channel(dotMask2) = dotColor255_2(c);
+    image(:,:,c) = channel;
+end
 %% Make everything outside the frame transparent
 %
 % We need an alpha channel so that the rectangular texture does not

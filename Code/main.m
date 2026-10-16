@@ -66,7 +66,7 @@ participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub
 design = getInstructions(ptb.Keys,design,participantInfo);
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training","onset speedrun","onset test"]);
+condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training","onset speedrun","onset test", "fixdot speedrun"]);
 log.task = condition;
 
 %% Switch case for different tasks
@@ -104,6 +104,8 @@ switch condition
     case "onset test"
         % fixed contrasts of the latest training file, nothing is adapted
         participantInfo = speedRunOnsetTest(log, ptb, design, participantInfo, myPaths);
+    case "fixdot speedrun"
+        participantInfo = speedRunFixDots(log, ptb, design, participantInfo, myPaths);
 end    
 save(myPaths.subjectDirectory, "participantInfo")
 end

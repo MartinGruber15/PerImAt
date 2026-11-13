@@ -1,18 +1,15 @@
 function main(setUp)
 sca;
-Screen('Preference', 'SkipSyncTests', 1); %TODO
-Screen('Preference', 'Verbosity', 1);  % Only Errors + warnings
-opacity = 0.8;
-PsychDebugWindowConfiguration([], opacity)
+%Screen('Preference', 'SkipSyncTests', 1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main script for an experiment...
-% Author: Martin Gruber
-% Date: 09/12/2025
+% Author: 
+% Date: 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Choose the experiment setup
 % CIN-personal, CIN-experimentroom, MPI
-if nargin < 1 || isempty(setUp); setUp = 'personal';end
+if nargin < 1 || isempty(setUp); setUp = 'CIN-experimentroom';end
 addpath('utils'); addpath('settings');
 fprintf('Running BR experiment with set-up "%s"\n', setUp);
 
@@ -25,8 +22,9 @@ cleanupObj = onCleanup(@() save_utils.closeAll(ptb, log, design,myPaths)); % mak
 
 log.reportCond = reportCondition.report;
 offline = true;
-useEyetracker = false;
+useEyetracker = true;
 dummymode = false; % eye tracker dummy mode
+debugTrigger = false; % [change 2026-11-03] fMRI version without scanner: true = scanner triggers can be typed as 'w' on a keyboard (tests only)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if strcmp(setUp,'MPI')
@@ -38,9 +36,14 @@ else
     stereomodeSequential = false; % true for shutter glasses at MPI
     design.maxRunNr                 = 5;
 end
+% [change 2026-11-03] the fMRI version (perImAtOnline) always has 10 runs, also when it is
+% tested on another set-up (debugTrigger); its catch-trial table
+% (2 catch trials per run, perImAtOnline) is built for 10 runs.
+if ~offline; design.maxRunNr = 10; end
 log.sub = input('Enter subject ID: ', 's');
 
 %% Settings
+ptb.debugTrigger = debugTrigger;
 ptb = getPTBSettings(ptb, setUp, useEyetracker, stereomodeSequential); % Variables read out by the system and specific to the hardware
 myPaths = getPaths(myPaths,log.sub); % Paths
 design = getVisualDesignSettings(ptb, myPaths, design); % Define design of all visually presented elements
@@ -50,7 +53,6 @@ if offline
 end
 %% Additional design elements
 design.waitTillStartDuration    = 3;
-%showDotPositions(ptb,design)
 
 %% Condition Table
 % Condition table
@@ -66,11 +68,21 @@ participantInfo = getParticipantInfo(ptb.Keys, myPaths.subjectDirectory, log.sub
 design = getInstructions(ptb.Keys,design,participantInfo);
 % Decide what to do
 % experiment or consent form
-condition = input.chooseOption(["main experiment","training","present fixDot locations","key binding training", "BR training","onset speedrun","onset test", "fixdot speedrun"]);
+condition = input.chooseOption(["consent form","main experiment","training","present fixDot locations","key binding training", "BR training", "QUEST+ calibration", "QUEST+ test", "QUEST+ recover"]);
 log.task = condition;
+% [added 2026-11-11] parts that show the subject's textures: if there is no training
+% file, the experimenter decides (Enter = contrast 1.0, m = type the contrasts, the
+% textures are then rebuilt, a = abort). Consent, BR training (default contrasts) and
+% the calibration (own prior) do not use the training file, so no question there.
+if any(condition == ["main experiment", "training", "present fixDot locations", "QUEST+ test"]) && isempty(design.trainingFile)
+    if ~confirmUncalibratedContrasts(ptb, myPaths, design); return; end
+end
 
 %% Switch case for different tasks
 switch condition
+    case "consent form"
+        ptb.useEyetracker = false;   % no EyeLink in this task (closeAll would try to close it)
+        participantInfo = consentForm(log, ptb, design, myPaths, participantInfo);
     case "main experiment"
             % Run main experiment
             [log.reportCond,log.suffix] = input.autoChooseNextBlock(design.maxRunNr, myPaths.subjectDirectory, design.reportOrder);
@@ -93,19 +105,60 @@ switch condition
                 [~, ~, design, participantInfo] = perImAtOnline(log, ptb, design, myPaths, participantInfo,'training'); %#ok<UNRCH>
             end
     case "present fixDot locations"
-            presentFixDotLocations(ptb, design);
+        % fixation-dot positions (one after another, then all; house, then face),
+        % then a 7-trial practice of the whole task in the dual condition
+        % (perImAtOffline 'practice', [changed 2026-11-04])
+        log.runNr = 1;
+        ptb.useEyetracker = false;
+        participantInfo = presentFixDotLocations(log, ptb, design, myPaths, participantInfo);
     case "key binding training"
-        keyBindingTraining(ptb, design);
+        ptb.useEyetracker = false;
+        keyBindingTraining(ptb, design, myPaths);
     case "BR training"
-        binocularRivalryTraining(log,ptb,design,myPaths);
-    case "onset speedrun"
-        input.adaptStimuli(log,myPaths);
-        participantInfo = speedRunOnset(log, ptb, design, participantInfo, myPaths);
-    case "onset test"
-        % fixed contrasts of the latest training file, nothing is adapted
-        participantInfo = speedRunOnsetTest(log, ptb, design, participantInfo, myPaths);
-    case "fixdot speedrun"
-        participantInfo = speedRunFixDots(log, ptb, design, participantInfo, myPaths);
+        % sustained rivalry, 2 x design.brTrainingDuration s, default contrasts
+        ptb.useEyetracker = false;
+        participantInfo = binocularRivalryTraining(log, ptb, design, myPaths, participantInfo);
+    case "QUEST+ calibration"
+        % adaptive calibration of house/face and left/right-eye contrasts
+        % (utils/+questplus/README.md); saves <sub>_training_<n>.mat
+        log.runNr = 1;
+        ptb.useEyetracker = false;
+        participantInfo = questPlusCalibration(log, ptb, design, myPaths, participantInfo);
+    case "QUEST+ test"
+        % test the contrasts of the latest training file (loaded at start-up)
+        log.runNr = 1;
+        ptb.useEyetracker = false;
+        participantInfo = questPlusTest(log, ptb, design, myPaths, participantInfo);
+    case "QUEST+ recover"
+        % [added 2026-11-10] contrasts of an interrupted calibration (checkpoint
+        % after every trial): choose a set and save it as <sub>_training_<n>.mat
+        ptb.useEyetracker = false;
+        questplus.recoverCalibration(log, myPaths);
 end    
-save(myPaths.subjectDirectory, "participantInfo")
+save(fullfile(myPaths.subjectDirectory, 'participantInfo.mat'), "participantInfo")   % was saved as <rawdata>/sub-XX.mat
+end
+
+
+function ok = confirmUncalibratedContrasts(ptb, myPaths, design)
+% [added 2026-11-11] no <sub>_training_<n>.mat: continue with contrast 1.0, type the
+% contrasts (textures rebuilt by getVisualDesignSettings), or abort
+fprintf(2, ['\nNo training file (<sub>_training_<n>.mat) for this subject: the textures use contrast 1.0\n' ...
+    '(house, face, left eye, right eye).\n']);
+while true
+    a = lower(strtrim(input('Enter = continue with 1.0 | m = enter the contrasts by hand | a = abort: ', 's')));
+    switch a
+        case ''
+            ok = true; return
+        case 'm'
+            [sp, savedFile] = loadLatestTrainingParameters(myPaths.subjectDirectory, true);   % asks, may save <sub>_training_1.mat
+            sp.savedFile = savedFile;
+            design.stimuliParametersOverride = sp;
+            getVisualDesignSettings(ptb, myPaths, design);   % rebuilds the textures (design is a handle object)
+            ok = true; return
+        case 'a'
+            fprintf('Aborted.\n'); ok = false; return
+        otherwise
+            fprintf('Please press Enter or type m or a.\n');
+    end
+end
 end

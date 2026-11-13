@@ -79,7 +79,7 @@ for trial = 1:rows
     taskOnset = Screen('Flip', ptb.window, cueEnd);
     taskEnd = taskOnset + design.taskDuration;
     if ptb.useEyetracker
-        Eyelink('Message', sprintf('TASK_ONSET trial=%d', trial));
+        Eyelink('Message', sprintf('TASK_ONSET trial=%d condition=%s cue=%s', trial, condition, trialStim.cue));   % [changed 2026-11-10] + condition, cue
     end
     % Draw the BR stimuli
     draw.stereo.images(ptb, design,trialStim.leftImage, trialStim.rightImage);
@@ -87,11 +87,11 @@ for trial = 1:rows
     stimOffset = stimOnset + design.stimulusPresentationTime;
     if ptb.useEyetracker
         if log.reportCond == reportCondition.report
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, isCatch));
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s cue=%s left=%s right=%s catch=%d',trial, condition,log.reportCond,trialStim.cue, trialStim.leftEyeStim, trialStim.rightEyeStim, isCatch));
         else
             fixPointLeft  = strjoin(string(trialStim.selectedPair(:,1)), ',');
             fixPointRight = strjoin(string(trialStim.selectedPair(:,2)), ',');
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s fixPointLeft=%s fixPointRight=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, fixPointLeft, fixPointRight,isCatch));
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s cue=%s left=%s right=%s fixPointLeft=%s fixPointRight=%s catch=%d',trial, condition,log.reportCond,trialStim.cue,trialStim.leftEyeStim, trialStim.rightEyeStim, fixPointLeft, fixPointRight,isCatch));
         end
     end
     % draw response phase (only fixation cross)
@@ -101,11 +101,15 @@ for trial = 1:rows
     if ptb.useEyetracker
         Eyelink('Message', sprintf('RIVALRY_OFFSET trial=%d', trial));
     end
+    % the rivalry textures are made anew every trial: release them
+    Screen('Close', [trialStim.leftImage, trialStim.rightImage]);
     % draw vividness question (already during response phase)
     draw.stereo.fixCrossPlusText(ptb,design, trialStim.finalQText, ptb.FontColor);
     %collect the response
     if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
-        [response, rt, events,ambiguous] = input.getFirstKeyEventAmbiguous(ptb.Keyboard2,events, stimOnset, responseEnd);
+        % percept: house / face / mixed keys only
+        [response, rt, events,ambiguous] = input.getFirstKeyEventAmbiguous(ptb.Keyboard2,events, stimOnset, responseEnd, ...
+            [ptb.Keys.house, ptb.Keys.face, ptb.Keys.accept]);
     else
         WaitSecs('UntilTime',responseEnd);
     end
@@ -122,11 +126,13 @@ for trial = 1:rows
         Eyelink('Message', sprintf('ITI_ONSET trial=%d', trial));
     end
     lastNoiseFlip = display.stereo.gaussianNoise(ptb,design,ITIOnset,design.ITI, leftNoise, rightNoise);
-    [vividResponse, vividRT, ~] = input.readFirstKeyEvent(ptb.Keyboard2,events, questionOnset, lastNoiseFlip); % records only until last flip to not block preparation of last trial ->100ms
+    % vividness rating 1-5 (accept, left, right, up, down; see perImAtOffline)
+    [vividResponse, vividRT, ~] = input.readFirstKeyEvent(ptb.Keyboard2,events, questionOnset, lastNoiseFlip, ...
+        [ptb.Keys.accept, ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down]); % records only until last flip to not block preparation of last trial ->100ms
     trialStartTime = ITIOnset + design.ITI;
     
     %% Save stimuli and timing
-    log.data.trial{trial}           = trial;
+    log.data.trial(trial)           = trial;
     log.data.condition{trial}       = condition;
     log.data.rightEye{trial}        = trialStim.rightEyeStim;
     log.data.leftEye{trial}         = trialStim.leftEyeStim;
@@ -161,8 +167,43 @@ for trial = 1:rows
     log.data.responseOnset(trial)        = responseOnset;
     log.data.questionOnset(trial)       = questionOnset;
     log.data.ITIOnset(trial)             = ITIOnset;
-    
+
+    %% One line per trial for the experimenter
+    if (log.reportCond == reportCondition.report) || (log.reportCond == reportCondition.dual)
+        perceptStr = sprintf('%-5s rt %4.2f s', perceptLabel(response, ptb), rt);
+        if ambiguous; perceptStr = [perceptStr ' (several keys)']; end
+    else
+        perceptStr = '(no report)';
+    end
+    catchStr = ''; if isCatch; catchStr = ' CATCH'; end
+    fprintf('%3d/%d  %-10s cue %-5s | left %s, right %s%s -> %s | rating %s\n', trial, rows, char(condition), ...
+        char(string(trialStim.cue)), char(string(trialStim.leftEyeStim)), char(string(trialStim.rightEyeStim)), ...
+        catchStr, perceptStr, ratingLabel(vividResponse, ptb));
 end
+end
+
+
+function s = perceptLabel(resp, ptb)
+% first key of the percept response (0 = no key pressed)
+if isempty(resp) || resp(1) == 0
+    s = 'none';
+elseif resp(1) == ptb.Keys.house
+    s = 'house';
+elseif resp(1) == ptb.Keys.face
+    s = 'face';
+elseif resp(1) == ptb.Keys.accept
+    s = 'mixed';
+else
+    s = '?';
+end
+end
+
+
+function s = ratingLabel(resp, ptb)
+% rating keys as scored in perImAtOffline (accept/left/right/up/down = 1-5)
+k = [ptb.Keys.accept, ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down];
+i = find(k == resp, 1);
+if isempty(i); s = '-'; else; s = num2str(i); end
 end
 
 function trialStim = setUpStimuliButInGreyShadesThisTime(trialID, stimLookupTable, ptb, design, condition, catchType,reportCond)
@@ -184,8 +225,8 @@ else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
     if reportCond == reportCondition.report% in report condition, there is only mock rivalry
-        rightEyeStim = catchParts(2);
-        leftEyeStim = catchParts(2);
+        rightEyeStim = catchTexturePairing(catchParts(2));   % same image in both eyes
+        leftEyeStim = rightEyeStim;
     else % no report condition has real rivalry in catch trials
         rightEyeStim = catchParts(2);
         leftEyeStim = catchParts(3);
@@ -213,13 +254,14 @@ switch condition
     case "baseline"
         cueTxt = design.cueTextBaseline; % no text at all?
         taskStimulus = "grey_square";
+        cue = "-";   % baseline has no cue (lookup rows 1-2 / catch table give 'face')
     otherwise
         error("Unknown condition")
 
 end
 
-leftImgName  = eyeSpecificName(leftImgName,  'L');
-rightImgName = eyeSpecificName(rightImgName, 'R');
+leftImgName  = eyeSpecificName(design, leftImgName,  'L');
+rightImgName = eyeSpecificName(design, rightImgName, 'R');
 
 if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual)
     % Randomly select one valid pair
@@ -245,8 +287,9 @@ if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.du
 end
 
 %% Load the respective images
-% eye-specific textures (houseL/houseR/faceL/faceR); stimuli without eye-specific
-% version (e.g. catch images houseFace/faceHouse) fall back to the plain name
+% eye-specific textures (houseL/houseR/faceL/faceR); report catch images
+% (faceL, housefaceHouseLFaceR, ...) are found under their own name, the same
+% image for both eyes (eyeSpecificName)
 leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design);
 rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
 
@@ -268,8 +311,40 @@ trialStim = struct( ...
 if (reportCond == reportCondition.noReport) || (reportCond == reportCondition.dual); trialStim.selectedPair = selectedPair;end
 end
 
-function name = eyeSpecificName(stimName, eyeSuffix)
-% Returns e.g. 'houseL' for ('house','L')
-name = char(stimName) + string(eyeSuffix);
-name = char(name);
+function name = eyeSpecificName(design, stimName, eyeSuffix)
+% Returns the field name in design.images for this stimulus and eye:
+%   1) eye-specific version, e.g. 'houseL' for ('house','L')
+%   2) otherwise the plain name, matched case-insensitively, e.g. the report
+%      catch stimulus 'housefaceHouseLFaceR' (same image for both eyes,
+%      built by generate.getContrastAdjustedImages)
+% design.images is a DataContainer: isfield() does not work on it and reading
+% a missing field silently returns an empty DataContainer, so check explicitly.
+available = fieldnames(design.images);
+name = [char(stimName) char(eyeSuffix)];
+if any(strcmp(available, name)); return; end
+% eye-specific version with different capitalisation
+idx = find(strcmpi(available, name), 1);
+if ~isempty(idx); name = available{idx}; return; end
+idx = find(strcmpi(available, char(stimName)), 1);
+if isempty(idx)
+    error('eyeSpecificName:unknownStimulus', ...
+        'No image "%s" or "%s" in design.images.', name, char(stimName));
+end
+name = available{idx};
+end
+
+
+function stim = catchTexturePairing(stim)
+% Report catch from a catch table made before createCatchTrialOrder added the
+% textures: pick them at random. The same image goes to both eyes:
+%   'houseface'/'facehouse' -> design.images.<houseface|facehouse><HouseLFaceR|FaceLHouseR>
+%   'face'/'house'          -> faceL or faceR / houseL or houseR
+s = lower(string(stim));
+if any(s == ["houseface", "facehouse"])
+    pairings = ["HouseLFaceR", "FaceLHouseR"];
+    stim = s + pairings(randi(numel(pairings)));
+elseif any(s == ["face", "house"])
+    eyeTextures = ["L", "R"];
+    stim = s + eyeTextures(randi(numel(eyeTextures)));
+end
 end

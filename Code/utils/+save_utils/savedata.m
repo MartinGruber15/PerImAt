@@ -24,7 +24,8 @@ function log = savedata(log, ptb, design, participantInfo, myPaths)
         end
     end
     % filename dependent on task [objects|gratings] and run [1-6]
-    fileName = ['sub-' log.sub '_training'];
+    % one file per presentation (used by binocularRivalryTraining)
+    fileName = ['sub-' log.sub '_BRtraining_run-' num2str(log.runNr)];
     
     % get the file
     if design.useET 

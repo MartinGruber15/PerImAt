@@ -16,7 +16,7 @@ if nargin >= 3 && ~isempty(presetParameters)
     for i = 1:numel(presetNames)
         stimuliParameters.(presetNames{i}) = presetParameters.(presetNames{i});
     end
-    fprintf('\nThe values below are the OPTIMISED parameters (press Enter to keep them).\n');
+    fprintf('\nThe values in [ ] are the calibrated contrasts: press Enter to keep them.\n');
 end
 
 
@@ -43,48 +43,33 @@ end
 %% Enter parameters
 adaptParameters = true;
 while adaptParameters
-    fprintf('\n');
+    fprintf('\n=================================================\n');
+    fprintf('  CONTRASTS FOR THE NEXT PARTS (Enter keeps [value])\n');
     fprintf('=================================================\n');
-    fprintf('        ADAPT TRAINING STIMULUS PARAMETERS\n');
-    fprintf('=================================================\n');
-    fprintf('\nStimuli\n')
     stimuliParameters.houseContrast = inputWithDefault('House contrast',stimuliParameters.houseContrast);
     stimuliParameters.faceContrast = inputWithDefault('Face contrast',stimuliParameters.faceContrast);
+    % eye-specific contrast, multiplied onto the house/face contrast
+    stimuliParameters.leftEyeContrast  = inputWithDefault('Left eye contrast (x stimulus contrast)',stimuliParameters.leftEyeContrast);
+    stimuliParameters.rightEyeContrast = inputWithDefault('Right eye contrast (x stimulus contrast)',stimuliParameters.rightEyeContrast);
 
-    % Eye-specific contrast (multiplied onto the house/face contrast above)
-    fprintf('\nEye-specific contrast (multiplies stimulus contrast):\n');
-    stimuliParameters.leftEyeContrast  = inputWithDefault('Left eye contrast',stimuliParameters.leftEyeContrast);
-    stimuliParameters.rightEyeContrast = inputWithDefault('Right eye contrast',stimuliParameters.rightEyeContrast);
-
-
-    %% Display selected parameters
-    fprintf('\n---------------------------------------------\n');
-    fprintf('Selected parameters:\n');
-    fprintf('\nStimuli\n')
-    fprintf('  House contrast:  %.4f\n',stimuliParameters.houseContrast);
-    fprintf('  Face contrast:  %.4f\n',stimuliParameters.faceContrast);
-    fprintf('\nEye (multiplied onto stimulus contrast):\n');
-    fprintf('  Left eye contrast:  %.4f\n',stimuliParameters.leftEyeContrast);
-    fprintf('  Right eye contrast: %.4f\n',stimuliParameters.rightEyeContrast);
-    fprintf('---------------------------------------------\n');
-    fprintf('\nResulting contrast per texture (stimulus x eye):\n');
-    fprintf('  FaceLeft:   %.4f\n',stimuliParameters.faceContrast  * stimuliParameters.leftEyeContrast);
-    fprintf('  FaceRight:  %.4f\n',stimuliParameters.faceContrast  * stimuliParameters.rightEyeContrast);
-    fprintf('  HouseLeft:  %.4f\n',stimuliParameters.houseContrast * stimuliParameters.leftEyeContrast);
-    fprintf('  HouseRight: %.4f\n',stimuliParameters.houseContrast * stimuliParameters.rightEyeContrast);
-    fprintf('---------------------------------------------\n');
-
+    %% Display the resulting texture contrasts
+    fprintf('Texture contrasts (stimulus x eye): HouseL %.4f  FaceR %.4f | FaceL %.4f  HouseR %.4f\n', ...
+        stimuliParameters.houseContrast * stimuliParameters.leftEyeContrast, ...
+        stimuliParameters.faceContrast  * stimuliParameters.rightEyeContrast, ...
+        stimuliParameters.faceContrast  * stimuliParameters.leftEyeContrast, ...
+        stimuliParameters.houseContrast * stimuliParameters.rightEyeContrast);
 
     %% Confirm
+    % [changed 2026-11-06] Enter saves (was: y); n = enter the values again
     while true
-        answer = input('\nStart training with these parameters? Y/N: ','s');
-        if strcmpi(answer, 'y')
+        answer = strtrim(input('Press Enter to save these contrasts (n = enter them again): ','s'));
+        if isempty(answer) || strcmpi(answer, 'y')
             adaptParameters = false;
             break;
         elseif strcmpi(answer, 'n')
             break;
         else
-            fprintf('Invalid input. Please enter Y or N.\n');
+            fprintf('Please press Enter (save) or type n.\n');
         end
     end
 end
@@ -97,8 +82,7 @@ save(parameterFile, 'stimuliParameters');
 stimuliParameters.parameterFile = parameterFile;
 stimuliParameters.trainingNumber = trainingNumber;
 
-fprintf('\nTraining parameters saved to:\n%s\n\n', ...
-    parameterFile);
+fprintf('Contrasts saved to %s\n', parameterFile);
 
 end
 

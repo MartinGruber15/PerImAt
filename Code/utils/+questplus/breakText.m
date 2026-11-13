@@ -1,0 +1,33 @@
+function txt = breakText(participantInfo, mode)
+% questplus.breakText  Text of the short break before a validation (questplus.verifyControl).
+%
+%   txt = questplus.breakText(participantInfo)           % '... press any key to continue'
+%   txt = questplus.breakText(participantInfo, 'wait')   % [added 2026-11-06] while the
+%       experimenter decides how to go on (questplus.askExperimenter): no key
+%       instruction, so that the subject does not type into the command window
+if nargin < 2 || isempty(mode); mode = 'key'; end
+german = isfield(participantInfo, 'language') && strcmp(participantInfo.language, 'german');
+if strcmpi(mode, 'wait')
+    if german
+        txt = ['Kurze Pause.\n\n' ...
+            'Schließe kurz die Augen und entspanne dich.\n' ...
+            'Es geht gleich weiter.'];
+    else
+        txt = ['Short break.\n\n' ...
+            'Close your eyes for a moment and relax.\n' ...
+            'The experiment continues in a moment.'];
+    end
+    return
+end
+if german
+    txt = ['Kurze Pause.\n\n' ...
+        'Schließe kurz die Augen und entspanne dich.\n' ...
+        'Halte danach den Kopf bequem und ruhig.\n\n' ...
+        'Drücke eine beliebige Taste, um fortzufahren.'];
+else
+    txt = ['Short break.\n\n' ...
+        'Close your eyes for a moment and relax.\n' ...
+        'Then keep your head comfortable and still.\n\n' ...
+        'Press any key to continue.'];
+end
+end

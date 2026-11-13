@@ -9,8 +9,16 @@ function [participantInfo] = alignFusion(ptb, participantInfo)
         participantInfo = struct;
     end
     
-    FusionText = ['Fusion test: use the left and right keys\n' ...
-        'to adjust and the middle key to continue'];
+    % the ACCEPT key (ptb.Keys.accept) is called "lower key" in all instructions
+    if isfield(participantInfo, 'language') && strcmp(participantInfo.language, 'german')
+        FusionText = ['Drücke links und rechts,\n' ...
+            'bis du nur einen Rahmen siehst.\n' ...
+            'Dann drücke die untere Taste.'];
+    else
+        FusionText = ['Press left and right\n' ...
+            'until you see one frame.\n' ...
+            'Then press the lower key.'];
+    end
     %ListenChar(2);
     
     % Check if horizontalOffset and verticalOffset are present in get
@@ -21,6 +29,12 @@ function [participantInfo] = alignFusion(ptb, participantInfo)
         horizontalOffset = 0;
         verticalOffset = 0;
     end
+
+    % The key that ended the previous screen (e.g. the break text) may still be
+    % held: wait until all keys are released (+ 0.2 s), otherwise the KbCheck
+    % below sees the 'accept' key and ends the alignment immediately.
+    KbReleaseWait(-1);
+    WaitSecs(0.2);
 
     change = 0.003;
     framesize = max([ptb.screenXpixels, ptb.screenYpixels])/3; 
@@ -64,19 +78,13 @@ function [participantInfo] = alignFusion(ptb, participantInfo)
         if KeyIsDown
             if keyCode(ptb.Keys.left)
                 horizontalOffset = horizontalOffset-change;
-                disp('=>pressed LEFT')
                 updateStereo = true;
             elseif keyCode(ptb.Keys.right)
                 horizontalOffset = horizontalOffset+change;
-                disp('=>pressed RIGHT')
                 updateStereo = true;
             elseif keyCode(ptb.Keys.accept)
-                disp('=>pressed SPACE')
                 break
-            else
-                disp(['Pressed' num2str(KbName(find(keyCode)))])
             end
-            fprintf('x-offset: %100.2f, y-offset:%100.2f \n', horizontalOffset, verticalOffset);
         end
     end
 

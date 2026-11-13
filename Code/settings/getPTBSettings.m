@@ -54,7 +54,7 @@ switch ptb.SetUp
         ptb.restrictedKeyList = [ptb.Keys.left, ptb.Keys.right, ptb.Keys.up, ptb.Keys.down, ptb.Keys.accept];
 
         % Get Keyboard indices
-        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Tastatur');
+        [keyboardIndices, productNames, ~] = GetKeyboardIndices('Apple Internal Keyboard / Trackpad');
         % for some reason GetKeyboardIndices returns two indices
         % for the Keyboard. The physical device might offer several
         % interfaces to interact with it
@@ -65,8 +65,7 @@ switch ptb.SetUp
         % provided by the same device
         ptb.Keyboard1 = keyboardIndices(1);
         ptb.Keyboard2 = keyboardIndices(1); % (change back to 1 if this doesnt work)
-        fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
-        fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
+        fprintf('Subject and experimenter keyboard: %u (%s)\n', ptb.Keyboard2, productNames{1});
     case 'CIN-personal'
         % subject keys
         ptb.Keys.left   = KbName('LeftArrow');  ptb.KeyList2(ptb.Keys.left)  = double(1);
@@ -88,8 +87,7 @@ switch ptb.SetUp
         % provided by the same device
         ptb.Keyboard1 = keyboardIndices(1);
         ptb.Keyboard2 = keyboardIndices(1); % (change back to 1 if this doesnt work)
-        fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
-        fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNames{1});
+        fprintf('Subject and experimenter keyboard: %u (%s)\n', ptb.Keyboard2, productNames{1});
 
     case 'CIN-experimentroom'
         % subject keys
@@ -105,8 +103,8 @@ switch ptb.SetUp
         [keyboardIndicesSub, productNamesSub, ~] = GetKeyboardIndices('HID 04d9:1203');
         ptb.Keyboard1 = keyboardIndicesExp(1);
         ptb.Keyboard2 = keyboardIndicesSub(1);
-        fprintf('\n=> Subjects keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNamesExp{1});
-        fprintf('\n=> Experimenter keyboard Nr.: %u  %s \n',ptb.Keyboard2, productNamesSub{1});
+        fprintf('Subject keyboard: %u (%s) | experimenter keyboard: %u (%s)\n', ptb.Keyboard2, productNamesSub{1}, ...
+            ptb.Keyboard1, productNamesExp{1});
     case 'MPI'
         ptb.usedatapixx = true;
         % Because of the MR compatible keyboard we flip the order of button
@@ -139,6 +137,17 @@ end
 
 if ptb.Keyboard1 == ptb.Keyboard2
    warning('You are using only one keyboard!'); 
+end
+
+% [change 2026-11-03] Scanner trigger: 'w', sent by the scanner on the subject keyboard
+% (ptb.Keyboard2, MPI only). Only with debugTrigger (main.m) can 'w' also be
+% typed on a keyboard (both queues) to start an fMRI run without a scanner
+% (mri.waitForTrigger). The key must be in the lists before the queues are created.
+if ptb.hasField('debugTrigger') && ptb.debugTrigger
+    if ~ptb.Keys.hasField('trg'); ptb.Keys.trg = KbName('w'); end
+    ptb.KeyList1(ptb.Keys.trg) = double(1);
+    ptb.KeyList2(ptb.Keys.trg) = double(1);
+    fprintf(2, 'DEBUG: the scanner trigger can be typed with ''w'' on the keyboard (debugTrigger in main.m).\n');
 end
 
 % create & start KbQueue for the first Keyboard.
@@ -207,7 +216,7 @@ ptb.BackgroundColor = ptb.grey; %TODO
 
 switch ptb.SetUp
     case 'personal'
-        [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [0 0 1920 1200], [],[],ptb.stereomode); 
+        [ptb.window, ptb.windowRect] = PsychImaging('OpenWindow', ptb.screenNumber, ptb.BackgroundColor, [0 0 2560 1440], [],[],ptb.stereomode); 
         % Real world variable
         ptb.DistToMonitor   = 450;  % Distance to monitor in mm (measured by hand) - REMEASURE
         ptb.widthMonitor    = 360;  % monitor width measured by hand - REMEASURE

@@ -79,6 +79,15 @@ else
     % Randomly draw cue and stimulus for every trial
     cue = cues(randi(numel(cues), nTrialsTotal, 1));
     stimulus = stimuli(randi(numel(stimuli), nTrialsTotal, 1));
+    % mixed catches: which rivalry textures they are built from
+    % (generate.getContrastAdjustedImages): houseL+faceR or faceL+houseR
+    pairings = ["HouseLFaceR"; "FaceLHouseR"];
+    isMixed  = ismember(stimulus, ["facehouse"; "houseface"]);
+    stimulus(isMixed) = stimulus(isMixed) + pairings(randi(numel(pairings), sum(isMixed), 1));
+    % pure catches: one eye's texture in both eyes (faceL/faceR, houseL/houseR)
+    eyeTextures = ["L"; "R"];
+    isPure = ismember(stimulus, ["face"; "house"]);
+    stimulus(isPure) = stimulus(isPure) + eyeTextures(randi(numel(eyeTextures), sum(isPure), 1));
     % Create table
     catchTable = table(run, conditionPool, cue, stimulus, ...
         'VariableNames', {'run', 'condition', 'cue', 'stimulus'});

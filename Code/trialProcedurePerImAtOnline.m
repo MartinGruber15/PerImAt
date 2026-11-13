@@ -25,7 +25,15 @@ KbQueueStart(ptb.Keyboard1); % Experimentors
 %rows = height(trialSequence);
 
 %% Presentation of stimuli
-log.ExperimentStart = GetSecs();
+% [change 2026-11-03] full run: the first cue is requested at the start volume (first volume
+% after the dummies, perImAtOnline / mri.waitForTrigger), so the run is locked
+% to the scanner; it appears as soon as trial 1 is drawn (delay printed as
+% "cue delay"). Training (no scanner): right away, as before.
+if log.hasField('scanStart') && ~isempty(log.scanStart)
+    log.ExperimentStart = log.scanStart;
+else
+    log.ExperimentStart = GetSecs();
+end
 trialStartTime = log.ExperimentStart;
 prevCondition = "";
 remindAssociation = true;
@@ -65,9 +73,9 @@ for trial = 1:rows
         draw.stereo.fixCrossPlusText(ptb, design,trialStim.cueTxt, trialStim.fixCrossColor);
         cueDuration = design.cueDuration;
     end
-    cueOnset = Screen('Flip', ptb.window, trialStartTime);
-
-    fprintf('Trial %d | cue delay:     %.2f ms\n', trial, (cueOnset-trialStartTime)*1000);
+    cueTarget = trialStartTime;   % [change 2026-11-03] planned cue onset, kept for the timing line below
+    cueOnset = Screen('Flip', ptb.window, cueTarget);
+    % [change 2026-11-03] the per-trial "cue delay" print moved into the timing line below
 
     cueEnd = cueOnset + cueDuration;
     if ptb.useEyetracker
@@ -82,7 +90,7 @@ for trial = 1:rows
     taskOnset = Screen('Flip', ptb.window, cueEnd);
     taskEnd = taskOnset + design.taskDuration;
     if ptb.useEyetracker
-        Eyelink('Message', sprintf('TASK_ONSET trial=%d', trial));
+        Eyelink('Message', sprintf('TASK_ONSET trial=%d condition=%s cue=%s', trial, condition, trialStim.cue));   % [changed 2026-11-10] + condition, cue
     end
     % Draw the BR stimuli
     draw.stereo.images(ptb, design, trialStim.leftImage, trialStim.rightImage);
@@ -90,11 +98,11 @@ for trial = 1:rows
     stimOffset = stimOnset + design.stimulusPresentationTime;
     if ptb.useEyetracker
         if log.reportCond == reportCondition.report
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, isCatch));
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s cue=%s left=%s right=%s catch=%d',trial, condition,log.reportCond,trialStim.cue, trialStim.leftEyeStim, trialStim.rightEyeStim, isCatch));
         else
             fixPointLeft  = strjoin(string(trialStim.selectedPair(:,1)), ',');
             fixPointRight = strjoin(string(trialStim.selectedPair(:,2)), ',');
-            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s left=%s right=%s fixPointLeft=%s fixPointRight=%s catch=%d',trial, condition,log.reportCond,trialStim.leftEyeStim, trialStim.rightEyeStim, fixPointLeft, fixPointRight,isCatch));
+            Eyelink('Message', sprintf('RIVALRY_ONSET trial=%d condition=%s reportCondition=%s cue=%s left=%s right=%s fixPointLeft=%s fixPointRight=%s catch=%d',trial, condition,log.reportCond,trialStim.cue,trialStim.leftEyeStim, trialStim.rightEyeStim, fixPointLeft, fixPointRight,isCatch));
         end
     end
     % draw response phase (only fixation cross)
@@ -104,6 +112,8 @@ for trial = 1:rows
     if ptb.useEyetracker
         Eyelink('Message', sprintf('RIVALRY_OFFSET trial=%d', trial));
     end
+    % the rivalry textures are made anew every trial: release them
+    Screen('Close', [trialStim.leftImage, trialStim.rightImage]);
     % draw first noise mask for ITI (already during response phase)
     [leftNoise, rightNoise] =generate.createStereoGaussianNoiseTextures(ptb, design);
     draw.stereo.textures(ptb, design, leftNoise, rightNoise);
@@ -127,7 +137,7 @@ for trial = 1:rows
     trialStartTime = ITIOnset + design.ITI;
     
     %% Save stimuli and timing
-    log.data.trial{trial}           = trial;
+    log.data.trial(trial)           = trial;
     log.data.condition{trial}       = condition;
     log.data.rightEye{trial}        = trialStim.rightEyeStim;
     log.data.leftEye{trial}         = trialStim.leftEyeStim;
@@ -160,14 +170,47 @@ for trial = 1:rows
     log.data.ITIOnset(trial)            = ITIOnset;
     log.data.triggerTimes{trial} = input.getAllTriggers(ptb.Keyboard2,events, ptb.Keys.trg);
     
-    fprintf('Trial %d | cue:     %.2f ms\n', trial, (1 - (taskOnset - cueOnset))*1000);
-    fprintf('Trial %d | task:    %.2f ms\n', trial, (2 - (stimOnset - taskOnset))*1000);
-    fprintf('Trial %d | br: %.2f ms\n', trial, (1.5-(responseOnset - stimOnset))*1000);
-    fprintf('Trial %d | br response:    %.2f ms\n', trial, (2-(maskOnset - stimOffset))*1000);
-    fprintf('Trial %d | mask:          %.2f ms\n', trial, (2-(ITIOnset - maskOnset))*1000);
+    %% Two lines per trial for the experimenter
+    % [change 2026-11-03] Before: six lines with the cue delay and the deviation of each phase
+    % from durations typed in as numbers (cue 1, task 2, rivalry 1.5, response 2,
+    % mask 2 s). They were wrong for the 3 s first cue of each miniblock and
+    % would silently be wrong after any change of a duration. Now the same six
+    % values are computed from the design.* durations, plus trial information.
+    % Deviation = observed - planned duration in ms (the planned values are
+    % design.* - ifi/2, hence the + ifi/2): cue, task, rivalry, response, mask.
+    planned  = [cueDuration, design.taskDuration, design.stimulusPresentationTime, design.maxReportTime, design.maskDuration] + ptb.ifi/2;
+    observed = [taskOnset - cueOnset, stimOnset - taskOnset, responseOnset - stimOnset, maskOnset - responseOnset, ITIOnset - maskOnset];
+    if log.reportCond == reportCondition.report
+        perceptStr = sprintf('%-5s rt %4.2f s', perceptLabel(response, ptb), rt);
+    else
+        perceptStr = '(no report)';
+    end
+    catchStr = ''; if isCatch; catchStr = ' CATCH'; end
+    fprintf(['%3d/%d  %-10s cue %-5s | left %s, right %s%s -> %s | %d triggers\n' ...
+        '        timing (ms): cue delay %+.0f | cue %+.0f, task %+.0f, rivalry %+.0f, response %+.0f, mask %+.0f\n'], ...
+        trial, rows, char(condition), char(string(trialStim.cue)), char(string(trialStim.leftEyeStim)), ...
+        char(string(trialStim.rightEyeStim)), catchStr, perceptStr, numel(log.data.triggerTimes{trial}), ...
+        1000 * (cueOnset - cueTarget), 1000 * (observed - planned));
     
 end
 end
+
+function s = perceptLabel(resp, ptb)
+% [change 2026-11-03] for the terminal line only: first key of the percept response
+% (0 = no key pressed). The saved data are scored in perImAtOnline as before.
+if isempty(resp) || resp(1) == 0
+    s = 'none';
+elseif resp(1) == ptb.Keys.house
+    s = 'house';
+elseif resp(1) == ptb.Keys.face
+    s = 'face';
+elseif resp(1) == ptb.Keys.accept
+    s = 'mixed';
+else
+    s = '?';
+end
+end
+
 
 function img = loadImage(folder, name)
 filename = fullfile(folder, name + ".png");
@@ -199,8 +242,8 @@ else
     catchParts = split(catchType, "_");
     cue = catchParts(1);
     if reportCond == reportCondition.report % in report condition, there is only mock rivalry
-        rightEyeStim = catchParts(2);
-        leftEyeStim = catchParts(2);
+        rightEyeStim = catchTexturePairing(catchParts(2));   % same image in both eyes
+        leftEyeStim = rightEyeStim;
     else % no report condition has real rivalry in catch trials
         rightEyeStim = catchParts(2);
         leftEyeStim = catchParts(3);
@@ -227,6 +270,7 @@ switch condition
     case "baseline"
         cueTxt = design.cueTextBaseline;
         taskStimulus = "grey_square";
+        cue = "-";   % baseline has no cue
     otherwise
         error("Unknown condition")
 
@@ -258,8 +302,9 @@ if reportCond == reportCondition.noReport
 end
 
 %% Load the respective images
-% eye-specific textures (houseL/houseR/faceL/faceR); stimuli without eye-specific
-% version (e.g. catch images houseFace/faceHouse) fall back to the plain name
+% eye-specific textures (houseL/houseR/faceL/faceR); report catch images
+% (faceL, housefaceHouseLFaceR, ...) are found under their own name, the same
+% image for both eyes (eyeSpecificName)
 leftImage = generate.makePinkNoiseTex(ptb.window, design.images.(leftImgName), design.masks.(leftImgName), design);
 rightImage = generate.makePinkNoiseTex(ptb.window, design.images.(rightImgName), design.masks.(rightImgName), design); 
 
@@ -281,15 +326,39 @@ if reportCond == reportCondition.noReport; trialStim.selectedPair = selectedPair
 end
 
 function name = eyeSpecificName(design, stimName, eyeSuffix)
-% Returns e.g. 'houseL' for ('house','L') if that texture exists, else the plain name
-name = char(stimName) + string(eyeSuffix);
-name = char(name);
-if ~isfield(design.images, name)
-    name = char(stimName);
+% Returns the field name in design.images for this stimulus and eye:
+%   1) eye-specific version, e.g. 'houseL' for ('house','L')
+%   2) otherwise the plain name, matched case-insensitively, e.g. the report
+%      catch stimulus 'housefaceHouseLFaceR' (same image for both eyes,
+%      built by generate.getContrastAdjustedImages)
+% design.images is a DataContainer: isfield() does not work on it and reading
+% a missing field silently returns an empty DataContainer, so check explicitly.
+available = fieldnames(design.images);
+name = [char(stimName) char(eyeSuffix)];
+if any(strcmp(available, name)); return; end
+% eye-specific version with different capitalisation
+idx = find(strcmpi(available, name), 1);
+if ~isempty(idx); name = available{idx}; return; end
+idx = find(strcmpi(available, char(stimName)), 1);
+if isempty(idx)
+    error('eyeSpecificName:unknownStimulus', ...
+        'No image "%s" or "%s" in design.images.', name, char(stimName));
+end
+name = available{idx};
+end
+
+
+function stim = catchTexturePairing(stim)
+% Report catch from a catch table made before createCatchTrialOrder added the
+% textures: pick them at random. The same image goes to both eyes:
+%   'houseface'/'facehouse' -> design.images.<houseface|facehouse><HouseLFaceR|FaceLHouseR>
+%   'face'/'house'          -> faceL or faceR / houseL or houseR
+s = lower(string(stim));
+if any(s == ["houseface", "facehouse"])
+    pairings = ["HouseLFaceR", "FaceLHouseR"];
+    stim = s + pairings(randi(numel(pairings)));
+elseif any(s == ["face", "house"])
+    eyeTextures = ["L", "R"];
+    stim = s + eyeTextures(randi(numel(eyeTextures)));
 end
 end
-
-
-
-
-

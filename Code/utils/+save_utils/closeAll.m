@@ -29,7 +29,6 @@ end
 if myPaths.hasField('subjectDirectory')
     try
         save_utils.saveEnvironment(log,ptb,design,myPaths)
-        disp('TODO reinclude log (etc) saving')
     catch ME
         warning('Could not save ptb data: %s', ME.message);
     end

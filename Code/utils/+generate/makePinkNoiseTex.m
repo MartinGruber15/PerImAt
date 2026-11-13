@@ -17,7 +17,7 @@ alpha = double(mask) / 255;
 [nRows, nCols] = size(alpha);
 stim = double(stimImg(:,:,1));
 
-visible = visibleThroughFrame(design, nRows, nCols);
+visible = generate.visibleMask(design, nRows, nCols);   % [changed 2026-11-10] shared definition (was the local visibleThroughFrame)
 w  = (1 - alpha) .* visible;
 sw = sum(w(:));
 
@@ -55,36 +55,9 @@ info.rms     = sqrt(sum(w(:) .* (bgQ(:) - visMean).^2) / sw) / 255;
 info.nPixels = sw;
 end
 
-function visible = visibleThroughFrame(design, nRows, nCols)
-% Logical nRows x nCols map of the stimulus pixels that are not covered by
-% the frame texture, i.e. that fall into its transparent circular aperture.
-dst = design.destinationRect;      % where the stimulus image is drawn
-frm = design.frameRect;            % where the frame texture is drawn
-texW = design.frameSizeInPixelsX;  % frame texture size (texture pixels)
-texH = design.frameSizeInPixelsY;
-
-% Screen coordinates of the centres of the stimulus pixels
-x = dst(1) + ((1:nCols) - 0.5) .* (dst(3) - dst(1)) ./ nCols;
-y = dst(2) + ((1:nRows) - 0.5) .* (dst(4) - dst(2)) ./ nRows;
-[X, Y] = meshgrid(x, y);
-
-% ... expressed in (1-based) frame-texture pixel coordinates
-u = (X - frm(1)) ./ ((frm(3) - frm(1)) / texW) + 0.5;
-v = (Y - frm(2)) ./ ((frm(4) - frm(2)) / texH) + 0.5;
-
-% Transparent aperture exactly as in generate.createOApertureXFrame
-radiusInner = design.apertureDiameterInPixels / 2 * (1 - design.frameThickness);
-inCircle    = hypot(u - (texW + 1) / 2, v - (texH + 1) / 2) < radiusInner;
-insideFrame = u >= 0.5 & u <= texW + 0.5 & v >= 0.5 & v <= texH + 0.5;
-
-visible = inCircle | ~insideFrame;   % outside the frame nothing covers it
-end
-
-
 function noise = oneOverFNoise(nRows, nCols, exponent)
 % Real-valued noise with an exact 1/f^exponent amplitude spectrum and random
-% phases (any image size, odd or even).  Same idea as generate.img_one_over_f,
-% but vectorised and without abs(): the random phases are Hermitian
+% phases (any image size, odd or even), vectorised and without abs(): the random phases are Hermitian
 % symmetric, so the inverse FFT is real and the histogram stays symmetric
 % (no skew towards dark values, no clipping when centred on 0.5).
 fy = [0:ceil(nRows/2) - 1, -floor(nRows/2):-1].' ./ nRows;   % cycles/pixel,

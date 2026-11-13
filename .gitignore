@@ -1,3 +1,9 @@
-.rawdata/
+# participant data and results: never on GitHub
+rawdata/
+derivatives/
+stimuli/
 
+# editor / OS files
 .idea/
+.DS_Store
+*.asv
